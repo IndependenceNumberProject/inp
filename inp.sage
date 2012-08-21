@@ -358,9 +358,43 @@ class AlphaProperties(object):
 
         NOTES:
 
-        This property solves the graph 'A?', or Graph(2).
+        This property was added to solve the graph 'A?', or Graph(2).
         """
         return not g.is_connected()
+
+    @staticmethod
+    def has_max_degree_order_minus_one(g):
+        r"""
+        Determine if the graph has a vertex with degree `n(G)-1`.
+
+        INPUT:
+
+        ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        boolean -- True if the graph has a vertex with degree `n(G)-1`.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = Graph(2)
+            sage: AlphaProperties.has_max_degree_order_minus_one(G)
+            False
+
+        ::
+
+            sage: G = graphs.CompleteGraph(3)
+            sage: AlphaProperties.has_max_degree_order_minus_one(G)
+            True
+
+        NOTES:
+
+        This property was added to solve the graph 'BW', or
+        graphs.PathGraph(3).
+        """
+        return max(g.degree()) == g.num_verts() - 1
 
 class LowerBounds(object):
     @staticmethod
