@@ -78,23 +78,25 @@ def difficult_graph_search(verbose=True):
                         filename = "difficult_graph_{0}_{1}".format(n,
                             datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
 
+                        filepath = os.path.expanduser("~/Dropbox/INP/{0}".format(filename))
+
                         p = g.plot()
 
                         try:
-                            if not os.path.exists(filename):
-                                os.makedirs(filename)
+                            if not os.path.exists(filepath):
+                                os.makedirs(filepath)
                         except IOError:
-                            "Can't make directory {0}".format(filename)
+                            "Can't make directory {0}".format(filepath)
 
                         try:
-                            p.save("{0}/{0}.png".format(filename))
-                            print "Plot saved to {0}.png".format(filename)
+                            p.save("{0}/{1}.png".format(filepath, filename))
+                            print "Plot saved."
                         except IOError:
                             print "Couldn't save {0}.png".format(filename)
 
                         try:
-                            _export_latex_pdf(g, filename)
-                            print "Dossier saved to {0}.pdf".format(filename)
+                            _export_latex_pdf(g, filepath, filename)
+                            print "Dossier saved."
                         except IOError:
                             print "Couldn't save {0}.pdf".format(filename)
 
@@ -107,7 +109,7 @@ def difficult_graph_search(verbose=True):
                 n += 1
                 break
 
-def _export_latex_pdf(g, filename):
+def _export_latex_pdf(g, filepath, filename):
     # Generate the latex for the information box
     info_table = """
     \\rowcolor{{LightGray}} $n$ & {0} \\\\
@@ -141,7 +143,10 @@ def _export_latex_pdf(g, filename):
                           lowerbounds=lowerbounds_table, 
                           upperbounds=upperbounds_table,
                           alphaproperties=alphaproperties_table)
-    latex_filename = "/Users/patrickgaskill/inp/{0}/{0}.tex".format(filename)
+    latex_filename = "{0}/{1}.tex".format(filepath, filename)
+
+    print filepath
+    print latex_filename
 
     # Write the latex to a file then run pdflatex on it
     try:
@@ -149,7 +154,7 @@ def _export_latex_pdf(g, filename):
         latex_file.write(output)
         latex_file.close()
         with open(os.devnull, 'wb') as devnull:
-            subprocess.call(['/usr/texbin/pdflatex', '-output-directory', filename, latex_filename],
+            subprocess.call(['/usr/texbin/pdflatex', '-output-directory', s, latex_filename],
                 stdout=devnull, stderr=subprocess.STDOUT)
     except:
         pass
