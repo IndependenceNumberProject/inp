@@ -52,7 +52,7 @@ def difficult_graph_search(verbose=True):
 
     AUTHORS:
 
-    - Patrick Gaskill (2012-08-09)
+    - Patrick Gaskill (2012-08-21)
     """
     n = 1
     while True:
@@ -187,7 +187,7 @@ def is_difficult(g):
 
     AUTHORS:
 
-    - Patrick Gaskill (2012-08-09)
+    - Patrick Gaskill (2012-08-21)
     """
     if has_alpha_property(g):
         return False
@@ -228,7 +228,7 @@ def has_alpha_property(g):
 
     AUTHORS:
 
-    - Patrick Gaskill (2012-08-09)
+    - Patrick Gaskill (2012-08-21)
     """
 
     # Loop through all the functions in the AlphaProperties class
@@ -272,7 +272,7 @@ def lower_bound(g):
 
     AUTHORS:
 
-    - Patrick Gaskill (2012-08-09)
+    - Patrick Gaskill (2012-08-21)
     """
 
     # The default bound is 1
@@ -320,7 +320,7 @@ def upper_bound(g):
 
     AUTHORS:
 
-    - Patrick Gaskill (2012-08-09)
+    - Patrick Gaskill (2012-08-21)
     """
 
     # The default upper bound is the number of vertices
