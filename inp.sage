@@ -122,17 +122,20 @@ def _export_latex_pdf(g, filepath, filename):
     # Generate the latex for the lower bounds table
     lowerbounds_table = ''
     for name, func in inspect.getmembers(LowerBounds, inspect.isfunction):
-        lowerbounds_table += "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
+        lowerbounds_table += \
+            "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
 
     # Generate the latex for the upper bounds table
     upperbounds_table = ''
     for name, func in inspect.getmembers(UpperBounds, inspect.isfunction):
-        upperbounds_table += "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
+        upperbounds_table += \
+            "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
 
     # Generate the latex for the alpha properties table
     alphaproperties_table = ''
     for name, func in inspect.getmembers(AlphaProperties, inspect.isfunction):
-        alphaproperties_table += "{0} \\\\\n".format(name).replace('_', '\_')
+        alphaproperties_table += \
+            "{0} \\\\\n".format(name).replace('_', '\_')
 
     # Insert all the generated latex into the template file
     template_file = open('dossier_template.tex', 'r')
@@ -151,7 +154,8 @@ def _export_latex_pdf(g, filepath, filename):
         latex_file.write(output)
         latex_file.close()
         with open(os.devnull, 'wb') as devnull:
-            subprocess.call(['/usr/texbin/pdflatex', '-output-directory', filepath, latex_filename],
+            subprocess.call(['/usr/texbin/pdflatex', '-output-directory',
+                filepath, latex_filename],
                 stdout=devnull, stderr=subprocess.STDOUT)
     except:
         pass
