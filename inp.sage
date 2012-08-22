@@ -449,6 +449,43 @@ class AlphaProperties(object):
                 return False
         return True
 
+    @staticmethod
+    def has_pendant_vertex(g):
+        r"""
+        Determine if the graph contains a pendant vertex.
+
+        INPUT:
+
+        ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        boolean -- True if the graph contains a pendant vertex
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = Graph(2)
+            sage: AlphaProperties.has_pendant_vertex(G)
+            False
+
+        ::
+
+            sage: G = graphs.StarGraph(4)
+            sage: AlphaProperties.has_pendant_vertex(G)
+            True
+
+        NOTES:
+
+        This property was added to solve the graph 'DCw'.
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
+        """
+        return 1 in g.degree_sequence()
+
 class LowerBounds(object):
     @staticmethod
     def matching_number(g):
