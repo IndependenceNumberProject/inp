@@ -145,16 +145,13 @@ def _export_latex_pdf(g, filepath, filename):
                           alphaproperties=alphaproperties_table)
     latex_filename = "{0}/{1}.tex".format(filepath, filename)
 
-    print filepath
-    print latex_filename
-
     # Write the latex to a file then run pdflatex on it
     try:
         latex_file = open(latex_filename, 'w')
         latex_file.write(output)
         latex_file.close()
         with open(os.devnull, 'wb') as devnull:
-            subprocess.call(['/usr/texbin/pdflatex', '-output-directory', s, latex_filename],
+            subprocess.call(['/usr/texbin/pdflatex', '-output-directory', filepath, latex_filename],
                 stdout=devnull, stderr=subprocess.STDOUT)
     except:
         pass
@@ -400,6 +397,45 @@ class AlphaProperties(object):
         graphs.PathGraph(3).
         """
         return max(g.degree()) == g.num_verts() - 1
+
+    @staticmethod
+    def is_claw_free(g):
+        r"""
+        Determine if the graph contains a claw, i.e., an induced `K_{1,3}`
+        subgraph.
+
+        INPUT:
+
+        ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        boolean -- True if the graph contains a claw
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = Graph(2)
+            sage: AlphaProperties.is_claw_free(G)
+            True
+
+        ::
+
+            sage: G = graphs.StarGraph(4)
+            sage: AlphaProperties.is_claw_free(G)
+            False
+
+        NOTES:
+
+        This property was added to solve the graph 'CU', or
+        graphs.PathGraph(4).
+        """
+        subsets = combinations_iterator(g.vertices(), 4)
+        for subset in subsets:
+            if g.subgraph(subset).degree_sequence() == [3,1,1,1]:
+                return False
+        return True
 
 class LowerBounds(object):
     @staticmethod
