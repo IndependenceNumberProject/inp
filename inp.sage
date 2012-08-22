@@ -361,6 +361,10 @@ class AlphaProperties(object):
         NOTES:
 
         This property was added to solve the graph 'A?', or Graph(2).
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
         """
         return not g.is_connected()
 
@@ -395,6 +399,10 @@ class AlphaProperties(object):
 
         This property was added to solve the graph 'BW', or
         graphs.PathGraph(3).
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
         """
         return max(g.degree()) == g.num_verts() - 1
 
@@ -430,6 +438,10 @@ class AlphaProperties(object):
 
         This property was added to solve the graph 'CU', or
         graphs.PathGraph(4).
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
         """
         subsets = combinations_iterator(g.vertices(), 4)
         for subset in subsets:
@@ -462,6 +474,10 @@ class LowerBounds(object):
 
         This property was added to solve the graph 'A_', or
         graphs.CompleteGraph(2).
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
         """
         return g.num_verts() - 2 * int(g.matching(value_only=True))
 
@@ -487,5 +503,9 @@ class UpperBounds(object):
 
         This property was added to solve the graph 'A_', or
         graphs.CompleteGraph(2).
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-21)
         """
         return g.num_verts() - int(g.matching(value_only=True))
