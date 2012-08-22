@@ -55,6 +55,8 @@ def difficult_graph_search(verbose=True):
     - Patrick Gaskill (2012-08-21)
     """
     n = 1
+    count = 0
+
     while True:
 
         if verbose:
@@ -64,6 +66,7 @@ def difficult_graph_search(verbose=True):
         while True:
             try:
                 g = gen.next()
+                count += 1
 
                 if verbose:
                     sys.stdout.write('.')
@@ -73,14 +76,13 @@ def difficult_graph_search(verbose=True):
 
                     if verbose:
                         print "\n\nFound a difficult graph!"
-                        #g.show()
+
+                        print "{0} graphs searched.".format(count)
 
                         filename = "difficult_graph_{0}_{1}".format(n,
                             datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
 
                         filepath = os.path.expanduser("~/Dropbox/INP/{0}".format(filename))
-
-                        p = g.plot()
 
                         try:
                             if not os.path.exists(filepath):
@@ -89,6 +91,7 @@ def difficult_graph_search(verbose=True):
                             "Can't make directory {0}".format(filepath)
 
                         try:
+                            p = g.plot()
                             p.save("{0}/{1}.png".format(filepath, filename))
                             print "Plot saved."
                         except IOError:
@@ -489,6 +492,81 @@ class AlphaProperties(object):
         - Patrick Gaskill (2012-08-21)
         """
         return 1 in g.degree_sequence()
+
+    @staticmethod
+    def has_complete_closed_neighborhood(g):
+        r"""
+        Determine if the graph contains a complete closed neighborhood.
+
+        INPUT:
+
+        ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        boolean -- True if the graph contains a complete closed neighborhood.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = graphs.CycleGraph(4)
+            sage: AlphaProperties.has_complete_closed_neighborhood(G)
+            False
+
+        ::
+
+            sage: G = graphs.CompleteGraph(4)
+            sage: AlphaProperties.has_complete_closed_neighborhood(G)
+            True
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-22)
+        """
+        for v in g.vertices():
+            if g.subgraph(g.neighbors(v)).is_clique():
+                return True
+
+        return False
+
+    @staticmethod
+    def is_bipartite(g):
+        r"""
+        Determine if the graph is bipartite.
+
+        INPUT:
+
+        ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        boolean -- True if the graph is bipartite.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = graphs.CompleteGraph(4)
+            sage: AlphaProperties.is_bipartite(G)
+            False
+
+        ::
+
+            sage: G = graphs.PathGraph(3)
+            sage: AlphaProperties.is_bipartite(G)
+            True
+
+        NOTES:
+
+        This property was added to solve the graph 'DFw'. This will eventually
+        be made redundant by has_nonempty_KE_part() to be added later.
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-22)
+        """
+        return g.is_bipartite()
 
 class LowerBounds(object):
     @staticmethod
