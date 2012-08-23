@@ -345,11 +345,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph is disconnected
+        - boolean -- True if the graph is disconnected
 
         EXAMPLES:
 
@@ -382,11 +382,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph has a vertex with degree `n(G)-1`.
+        - boolean -- True if the graph has a vertex with degree `n(G)-1`.
 
         EXAMPLES:
 
@@ -421,11 +421,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph contains a claw
+        - boolean -- True if the graph contains a claw
 
         EXAMPLES:
 
@@ -463,11 +463,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph contains a pendant vertex
+        - boolean -- True if the graph contains a pendant vertex
 
         EXAMPLES:
 
@@ -500,11 +500,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph contains a complete closed neighborhood.
+        - boolean -- True if the graph contains a complete closed neighborhood.
 
         EXAMPLES:
 
@@ -537,11 +537,11 @@ class AlphaProperties(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        boolean -- True if the graph is bipartite.
+        - boolean -- True if the graph is bipartite.
 
         EXAMPLES:
 
@@ -575,11 +575,11 @@ class LowerBounds(object):
 
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        integer -- A lower bound on the independence number of the graph
+        - integer -- A lower bound on the independence number of the graph
 
         EXAMPLES:
 
@@ -606,11 +606,11 @@ class UpperBounds(object):
         r"""
         INPUT:
 
-        ``g`` - sage.graphs.Graph -- The graph to be checked
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
 
         OUTPUT:
 
-        integer -- An upper bound on the independence number of the graph
+        - integer -- An upper bound on the independence number of the graph
 
         ::
 
