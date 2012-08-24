@@ -266,7 +266,7 @@ def lower_bound(g):
 
         sage: G = graphs.CompleteGraph(3)
         sage: lbound = lower_bound(G)
-        sage: lbound in ZZ and lbound >= 1 and lbound <= G.num_verts()
+        sage: lbound >= 1 and lbound <= G.num_verts()
         True
 
     NOTES:
@@ -314,7 +314,7 @@ def upper_bound(g):
 
         sage: G = graphs.CompleteGraph(3)
         sage: ubound = upper_bound(G)
-        sage: ubound in ZZ and ubound >= 1 and ubound <= G.num_verts()
+        sage: ubound >= 1 and ubound <= G.num_verts()
         True
 
     NOTES:
@@ -598,8 +598,7 @@ class LowerBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-        return g.num_verts() - 2 * int(g.matching(value_only=True,
-                                                  use_edge_labels=False))
+        return g.num_verts() - 2 * int(g.matching(value_only=True))
 
 class UpperBounds(object):
     @staticmethod
@@ -628,5 +627,43 @@ class UpperBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-        return g.num_verts() - int(g.matching(value_only=True,
-                                              use_edge_labels=False))
+        return g.num_verts() - int(g.matching(value_only=True))
+
+    @staticmethod
+    def fractional_alpha(g):
+        r"""
+        INPUT:
+
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        - float -- The fractional independence number of the graph
+
+        ::
+
+            sage: G = graphs.CompleteGraph(3)
+            sage: UpperBounds.fractional_alpha(G)
+            1.5
+
+        ::
+
+            sage: G = graphs.PathGraph(3)
+            sage: UpperBounds.fractional_alpha(G)
+            2.0
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-24)
+        """
+        p = MixedIntegerLinearProgram(maximization=True)
+        x = p.new_variable()
+        p.set_objective(sum([x[v] for v in g.vertices()]))
+
+        for v in g.vertices():
+            p.add_constraint(x[v] <= 1)
+
+        for (u,v) in g.edge_iterator(labels=False):
+            p.add_constraint(x[u] + x[v] <= 1)
+
+        return p.solve()
