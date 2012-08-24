@@ -568,6 +568,41 @@ class AlphaProperties(object):
         """
         return g.is_bipartite()
 
+    @staticmethod
+    def is_KE(g):
+        r"""
+        Determine if the graph is Konig-Egervary.
+
+        INPUT:
+
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        - boolean -- True if the graph is Konig-Egervary.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = graphs.PathGraph(3)
+            sage: AlphaProperties.is_KE(G)
+            True
+
+        ::
+
+            sage: G = graphs.CycleGraph(3)
+            sage: AlphaProperties.is_KE(G)
+            False
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-24)
+        """
+        alphaf = UpperBounds.fractional_alpha(g)
+        mu = int(g.matching(value_only=True, use_edge_labels=False))
+        return alphaf + mu == g.num_verts()
+
 class LowerBounds(object):
     @staticmethod
     def matching_number(g):
