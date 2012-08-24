@@ -598,7 +598,8 @@ class LowerBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-        return g.num_verts() - 2 * int(g.matching(value_only=True))
+        return g.num_verts() - 2 * int(g.matching(value_only=True,
+                                                  use_edge_labels=False))
 
 class UpperBounds(object):
     @staticmethod
@@ -627,4 +628,5 @@ class UpperBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-        return g.num_verts() - int(g.matching(value_only=True))
+        return g.num_verts() - int(g.matching(value_only=True,
+                                              use_edge_labels=False))
