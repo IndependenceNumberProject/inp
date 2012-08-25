@@ -118,9 +118,7 @@ def _export_latex_pdf(g, filepath, filename):
     \\rowcolor{{LightGray}} $n$ & {0} \\\\
     \\rowcolor{{LightGray}} $e$ & {1} \\\\
     \\rowcolor{{LightGray}} $\\alpha$ & {2} \\\\
-    \\rowcolor{{LightGray}} graph6 & {3} \\\\
-    """.format(g.num_verts(), g.num_edges(), len(g.independent_set()),
-               g.graph6_string().replace('_', '\_'))
+    """.format(g.num_verts(), g.num_edges(), len(g.independent_set()))
 
     # Generate the latex for the lower bounds table
     lowerbounds_table = ''
@@ -145,7 +143,9 @@ def _export_latex_pdf(g, filepath, filename):
     template = template_file.read()
     s = Template(template)
 
-    output = s.substitute(graph=latex(g), info=info_table,
+    output = s.substitute(graph=latex(g), 
+                          name=g.graph6_string().replace('_', '\_'),
+                          info=info_table,
                           lowerbounds=lowerbounds_table, 
                           upperbounds=upperbounds_table,
                           alphaproperties=alphaproperties_table)
