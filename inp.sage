@@ -600,7 +600,13 @@ class AlphaProperties(object):
         - Patrick Gaskill (2012-08-24)
         """
         alphaf = UpperBounds.fractional_alpha(g)
-        mu = int(g.matching(value_only=True, use_edge_labels=False))
+ 
+        # Ideally use_edge_labels=False but there is a bug in Sage
+        if g.weighted():
+            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
+
+        mu = int(g.matching(value_only=True, use_edge_labels=True))
+
         return alphaf + mu == g.num_verts()
 
 class LowerBounds(object):
@@ -633,7 +639,12 @@ class LowerBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-        return g.num_verts() - 2 * int(g.matching(value_only=True))
+
+        # Ideally use_edge_labels=False but there is a bug in Sage
+        if g.weighted():
+            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
+
+        return g.num_verts() - 2 * int(g.matching(value_only=True, use_edge_labels=True))
 
 class UpperBounds(object):
     @staticmethod
@@ -662,6 +673,11 @@ class UpperBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
+
+        # Ideally use_edge_labels=False but there is a bug in Sage
+        if g.weighted():
+            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
+
         return g.num_verts() - int(g.matching(value_only=True))
 
     @staticmethod
