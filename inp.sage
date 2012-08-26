@@ -691,6 +691,8 @@ class UpperBounds(object):
 
         - float -- The fractional independence number of the graph
 
+        EXAMPLES:
+
         ::
 
             sage: G = graphs.CompleteGraph(3)
