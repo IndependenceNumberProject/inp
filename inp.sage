@@ -196,8 +196,8 @@ def is_difficult(g):
     if has_alpha_property(g):
         return False
 
-    lbound = lower_bound(g)
-    ubound = upper_bound(g)
+    lbound = ceil(lower_bound(g))
+    ubound = floor(upper_bound(g))
 
     if lbound == ubound:
         return False
