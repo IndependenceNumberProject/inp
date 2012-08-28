@@ -337,6 +337,46 @@ def upper_bound(g):
             ubound = new_bound
     return ubound
 
+def matching_number(g):
+    r"""
+    Return the matching number of the graph.
+
+    INPUT:
+
+    - ``g`` - sage.graphs.Graph -- The graph to be checked
+
+    OUTPUT:
+
+    - int -- The matching number of the graph
+
+    EXAMPLES:
+
+    ::
+
+        sage: G = graphs.PathGraph(3)
+        sage: matching_number(G)
+        1
+
+    ::
+
+        sage: G = graphs.PathGraph(4)
+        sage: matching_number(G)
+        2
+
+    WARNINGS:
+
+    The Sage function matching() function is currently bugged, so this function
+    will need to change in Sage v5.3.
+
+    AUTHORS:
+
+    - Patrick Gaskill (2012-08-28)
+    """
+
+    # Sage 5.2 currently returns 2*mu when ignoring edge labels!
+    return Integer(g.matching(value_only=True, use_edge_labels=False)/2)
+
+
 class AlphaProperties(object):
     @staticmethod
     def is_disconnected(g):
