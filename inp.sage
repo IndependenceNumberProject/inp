@@ -640,18 +640,12 @@ class AlphaProperties(object):
         - Patrick Gaskill (2012-08-24)
         """
         alphaf = UpperBounds.fractional_alpha(g)
- 
-        # Ideally use_edge_labels=False but there is a bug in Sage
-        if g.weighted():
-            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
-
-        mu = int(g.matching(value_only=True, use_edge_labels=True))
-
+        mu = matching_number(g)
         return alphaf + mu == g.num_verts()
 
 class LowerBounds(object):
     @staticmethod
-    def matching_number(g):
+    def matching_bound(g):
         r"""
 
         INPUT:
@@ -667,7 +661,7 @@ class LowerBounds(object):
         ::
 
             sage: G = graphs.CompleteGraph(3)
-            sage: LowerBounds.matching_number(G)
+            sage: LowerBounds.matching_bound(G)
             1
 
         NOTES:
@@ -679,16 +673,11 @@ class LowerBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-
-        # Ideally use_edge_labels=False but there is a bug in Sage
-        if g.weighted():
-            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
-
-        return g.num_verts() - 2 * int(g.matching(value_only=True, use_edge_labels=True))
+        return g.num_verts() - 2 * matching_number(g)
 
 class UpperBounds(object):
     @staticmethod
-    def matching_number(g):
+    def matching_bound(g):
         r"""
         INPUT:
 
@@ -701,7 +690,7 @@ class UpperBounds(object):
         ::
 
             sage: G = graphs.CompleteGraph(3)
-            sage: UpperBounds.matching_number(G)
+            sage: UpperBounds.matching_bound(G)
             2
 
         NOTES:
@@ -713,12 +702,7 @@ class UpperBounds(object):
 
         - Patrick Gaskill (2012-08-21)
         """
-
-        # Ideally use_edge_labels=False but there is a bug in Sage
-        if g.weighted():
-            raise RuntimeWarning("There is a bug in sage, using the weighted matching number for now!")
-
-        return g.num_verts() - int(g.matching(value_only=True))
+        return g.num_verts() - matching_number(g)
 
     @staticmethod
     def fractional_alpha(g):
