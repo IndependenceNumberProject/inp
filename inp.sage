@@ -749,9 +749,9 @@ class UpperBounds(object):
         p.set_objective(sum([x[v] for v in g.vertices()]))
 
         for v in g.vertices():
-            p.add_constraint(x[v] <= 1)
+            p.add_constraint(x[v], max=1)
 
         for (u,v) in g.edge_iterator(labels=False):
-            p.add_constraint(x[u] + x[v] <= 1)
+            p.add_constraint(x[u] + x[v], max=1)
 
         return p.solve()
