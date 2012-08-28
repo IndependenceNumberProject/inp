@@ -647,6 +647,7 @@ class LowerBounds(object):
     @staticmethod
     def matching_bound(g):
         r"""
+        Compute the matching number lower bound.
 
         INPUT:
 
@@ -679,6 +680,8 @@ class UpperBounds(object):
     @staticmethod
     def matching_bound(g):
         r"""
+        Compute the matching number upper bound.
+
         INPUT:
 
         - ``g`` - sage.graphs.Graph -- The graph to be checked
@@ -707,6 +710,8 @@ class UpperBounds(object):
     @staticmethod
     def fractional_alpha(g):
         r"""
+        Compute the fractional independence number of the graph.
+
         INPUT:
 
         - ``g`` - sage.graphs.Graph -- The graph to be checked
