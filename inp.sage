@@ -720,3 +720,49 @@ class UpperBounds(object):
             p.add_constraint(x[u] + x[v] <= 1)
 
         return p.solve()
+
+    @staticmethod
+    def lovasz_theta(g):
+        r"""
+        This function computes the value of the Lovasz theta function of the
+        given graph.
+
+        INPUT:
+
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        - float -- The Lovasz theta function value for the graph
+
+        EXAMPLES:
+
+        For an empty graph `G`, `\theta(G) = n`::
+
+            sage: G = Graph(2)
+            sage: UpperBounds.lovasz_theta(G)
+            2
+
+        For a complete graph `G`, `\theta(G) = 1`::
+
+            sage: G = graphs.CompleteGraph(3)
+            sage: UpperBounds.lovasz_theta(G)
+            1
+
+        For a pentagon (five-cycle) graph `G`, `\theta(G) = \sqrt{5}`::
+
+            sage: G = graphs.CycleGraph(5)
+            sage: UpperBounds.lovasz_theta(G)
+            sqrt(5)
+
+        For the Petersen graph `G`, `\theta(G) = 4`::
+
+            sage: G = graphs.PetersenGraph()
+            sage: UpperBounds.lovasz_theta(G)
+            4
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-27)
+        """
+        pass
