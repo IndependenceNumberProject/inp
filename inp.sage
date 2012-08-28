@@ -45,6 +45,12 @@ def difficult_graph_search(verbose=True):
         sage: isinstance(G, Graph) # long time
         True
 
+    ::
+
+        sage: G = difficult_graph_search(verbose=False) # long time
+        sage: is_difficult(G) # long time
+        True
+
     NOTES:
 
     The return value of this function may change depending on the functions
