@@ -755,3 +755,75 @@ class UpperBounds(object):
             p.add_constraint(x[u] + x[v], max=1)
 
         return p.solve()
+
+    @staticmethod
+    def lovasz_theta(g):
+        r"""
+        This function computes the value of the Lovasz theta function of the
+        given graph.
+
+        INPUT:
+
+        - ``g`` - sage.graphs.Graph -- The graph to be checked
+
+        OUTPUT:
+
+        - float -- The Lovasz theta function value for the graph
+
+        EXAMPLES:
+
+        For an empty graph `G`, `\theta(G) = n`::
+
+            sage: G = Graph(2)
+            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            2.000
+
+        For a complete graph `G`, `\theta(G) = 1`::
+
+            sage: G = graphs.CompleteGraph(3)
+            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            1.000
+
+        For a pentagon (five-cycle) graph `G`, `\theta(G) = \sqrt{5}`::
+
+            sage: G = graphs.CycleGraph(5)
+            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            2.236
+
+        For the Petersen graph `G`, `\theta(G) = 4`::
+
+            sage: G = graphs.PetersenGraph()
+            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            4.000
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-27)
+        """
+        import cvxopt.base
+        import cvxopt.solvers
+
+        cvxopt.solvers.options['show_progress'] = False
+        cvxopt.solvers.options['abstol'] = float(1e-3)
+        cvxopt.solvers.options['reltol'] = float(1e-3)
+
+        gc = g.complement()
+        n = gc.num_verts()
+        m = gc.num_edges()
+
+        if n == 1:
+            return 1.0
+
+        d = m + n
+        c = -1r * cvxopt.base.matrix([0.0r]*(n-1) + [2.0r]*(d-n))
+        Xrow = [i*(1r+n) for i in xrange(n-1)] + [b+a*n for (a, b) in gc.edge_iterator(labels=False)]
+        Xcol = range(n-1) + range(d-1)[n-1:]
+        X = cvxopt.base.spmatrix(1.0r, Xrow, Xcol, (n*n, d-1r))
+
+        for i in xrange(n-1):
+            X[n*n-1r, i] = -1.0r
+
+        sol = cvxopt.solvers.sdp(c, Gs=[-X], hs=[-cvxopt.base.matrix([0.0r]*(n*n-1r) + [-1.0r], (n,n))])
+        v = 1.0r + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
+
+        return v[0r]
