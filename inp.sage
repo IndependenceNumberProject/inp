@@ -129,14 +129,24 @@ def _export_latex_pdf(g, filepath, filename):
     # Generate the latex for the lower bounds table
     lowerbounds_table = ''
     for name, func in inspect.getmembers(LowerBounds, inspect.isfunction):
-        lowerbounds_table += \
-            "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
+        value = func(g)
+        if value in ZZ:
+            lowerbounds_table += \
+                "{0} & {1} \\\\\n".format(name, value).replace('_', '\_')
+        else:
+            lowerbounds_table += \
+                "{0} & {1:.4f} \\\\\n".format(name, value).replace('_', '\_')
 
     # Generate the latex for the upper bounds table
     upperbounds_table = ''
     for name, func in inspect.getmembers(UpperBounds, inspect.isfunction):
-        upperbounds_table += \
-            "{0} & {1} \\\\\n".format(name, func(g)).replace('_', '\_')
+        value = func(g)
+        if value in ZZ:
+            upperbounds_table += \
+                "{0} & {1} \\\\\n".format(name, value).replace('_', '\_')
+        else:
+            upperbounds_table += \
+                "{0} & {1:.4f} \\\\\n".format(name, value).replace('_', '\_')
 
     # Generate the latex for the alpha properties table
     alphaproperties_table = ''
