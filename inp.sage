@@ -81,7 +81,7 @@ def difficult_graph_search(verbose=True):
                 if is_difficult(g):
 
                     if verbose:
-                        print "\n\nFound a difficult graph!"
+                        print "\n\nFound a difficult graph: {0}".format(g.graph6_string())
 
                         print "{0} graphs searched.".format(count)
 
