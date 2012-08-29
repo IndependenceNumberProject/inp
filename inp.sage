@@ -804,8 +804,8 @@ class UpperBounds(object):
         import cvxopt.solvers
 
         cvxopt.solvers.options['show_progress'] = False
-        cvxopt.solvers.options['abstol'] = float(1e-3)
-        cvxopt.solvers.options['reltol'] = float(1e-3)
+        cvxopt.solvers.options['abstol'] = float(1e-10)
+        cvxopt.solvers.options['reltol'] = float(1e-10)
 
         gc = g.complement()
         n = gc.num_verts()
