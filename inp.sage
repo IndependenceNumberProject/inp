@@ -556,6 +556,12 @@ class AlphaProperties(object):
             sage: AlphaProperties.is_KE(G)
             False
 
+        Not true that `\alpha_f + \mu = n` implies KE::
+
+            sage: G = Graph('GCpvdw')
+            sage: AlphaProperties.is_KE(G)
+            False
+
         AUTHORS:
 
         - Patrick Gaskill (2012-08-24)
