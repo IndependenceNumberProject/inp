@@ -68,7 +68,7 @@ def difficult_graph_search(verbose=True):
         if verbose:
             print 'Graph{0} on {1} vert{2}'.format(['', 's'][n != 1],
                                                     n, ['ex', 'ices'][n != 1])
-        gen = graphs.nauty_geng(str(n))
+        gen = graphs.nauty_geng("{0} -c".format(n))
         while True:
             try:
                 g = gen.next()
@@ -394,42 +394,43 @@ def matching_number(g):
 
 
 class AlphaProperties(object):
-    @staticmethod
-    def is_disconnected(g):
-        r"""
-        Determine if the graph is disconnected.
+    # Removing this in favor of passing -c flag directly to nauty_geng.
+    #@staticmethod
+    #def is_disconnected(g):
+    #    r"""
+    #    Determine if the graph is disconnected.#
+    #
+        # INPUT:
 
-        INPUT:
+        # - ``g`` - sage.graphs.Graph -- The graph to be checked
 
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
+        # OUTPUT:
 
-        OUTPUT:
+        # - boolean -- True if the graph is disconnected
 
-        - boolean -- True if the graph is disconnected
+        # EXAMPLES:
 
-        EXAMPLES:
+        # ::
 
-        ::
+        #     sage: G = Graph(2)
+        #     sage: AlphaProperties.is_disconnected(G)
+        #     True
 
-            sage: G = Graph(2)
-            sage: AlphaProperties.is_disconnected(G)
-            True
+        # ::
 
-        ::
+        #     sage: G = graphs.CompleteGraph(3)
+        #     sage: AlphaProperties.is_disconnected(G)
+        #     False
 
-            sage: G = graphs.CompleteGraph(3)
-            sage: AlphaProperties.is_disconnected(G)
-            False
+        # NOTES:
 
-        NOTES:
+        # This property was added to solve the graph 'A?', or Graph(2).
 
-        This property was added to solve the graph 'A?', or Graph(2).
+        # AUTHORS:
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
-        """
-        return not g.is_connected()
+        # - Patrick Gaskill (2012-08-21)
+        # """
+        # return not g.is_connected()
 
     @staticmethod
     def has_max_degree_order_minus_one(g):
