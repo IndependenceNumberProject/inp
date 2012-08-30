@@ -693,25 +693,25 @@ class UpperBounds(object):
 
         EXAMPLES:
 
-        For an empty graph `G`, `\theta(G) = n`::
+        For an empty graph `G`, `\vartheta(G) = n`::
 
             sage: G = Graph(2)
             sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
             2.000
 
-        For a complete graph `G`, `\theta(G) = 1`::
+        For a complete graph `G`, `\vartheta(G) = 1`::
 
             sage: G = graphs.CompleteGraph(3)
             sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
             1.000
 
-        For a pentagon (five-cycle) graph `G`, `\theta(G) = \sqrt{5}`::
+        For a pentagon (five-cycle) graph `G`, `\vartheta(G) = \sqrt{5}`::
 
             sage: G = graphs.CycleGraph(5)
             sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
             2.236
 
-        For the Petersen graph `G`, `\theta(G) = 4`::
+        For the Petersen graph `G`, `\vartheta(G) = 4`::
 
             sage: G = graphs.PetersenGraph()
             sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
