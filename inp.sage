@@ -494,9 +494,27 @@ class AlphaProperties(object):
             sage: AlphaProperties.is_KE(G)
             False
 
-        Not true that `\alpha_f + \mu = n` implies KE::
+        Not true that `\alpha_f + \mu = n` implies KE ::
 
             sage: G = Graph('GCpvdw')
+            sage: AlphaProperties.is_KE(G)
+            False
+
+        The graph `H_1` from Levit-Mandrescu 2011 is KE ::
+
+            sage: G = Graph('Cx')
+            sage: AlphaProperties.is_KE(G)
+            True
+
+        The graph `H_2` from Levit-Mandrescu 2011 is also KE ::
+
+            sage: G = Graph('FhcGO')
+            sage: AlphaProperties.is_KE(G)
+            True
+
+        But `H_3` from Levit-Mandrescu 2011 is not KE ::
+
+            sage: G = Graph('DxC')
             sage: AlphaProperties.is_KE(G)
             False
 
