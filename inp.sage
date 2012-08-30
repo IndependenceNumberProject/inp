@@ -326,29 +326,6 @@ def matching_number(g):
 
 
 class AlphaProperties(object):
-    # Removing this in favor of passing -c flag directly to nauty_geng.
-    #@staticmethod
-    #def is_disconnected(g):
-    #    r"""
-    #    Determine if the graph is disconnected.
-    #
-        # EXAMPLES:
-
-        # ::
-
-        #     sage: G = Graph(2)
-        #     sage: AlphaProperties.is_disconnected(G)
-        #     True
-
-        # ::
-
-        #     sage: G = graphs.CompleteGraph(3)
-        #     sage: AlphaProperties.is_disconnected(G)
-        #     False
-
-        # """
-        # return not g.is_connected()
-
     @staticmethod
     def has_max_degree_order_minus_one(g):
         r"""
