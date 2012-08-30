@@ -55,10 +55,6 @@ def difficult_graph_search(verbose=True):
 
     The return value of this function may change depending on the functions
     included in the AlphaProperties, LowerBounds, and UpperBounds classes.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-21)
     """
     n = 1
     count = 0
@@ -196,10 +192,6 @@ def is_difficult(g):
 
     The return value of this function may change depending on the functions
     included in the AlphaProperties, LowerBounds, and UpperBounds classes.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-21)
     """
     if has_alpha_property(g):
         return False
@@ -229,10 +221,6 @@ def has_alpha_property(g):
 
     The return value of this function may change depending on the functions
     included in the AlphaProperties class.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-21)
     """
 
     # Loop through all the functions in the AlphaProperties class
@@ -265,10 +253,6 @@ def lower_bound(g):
 
     The return value of this function may change depending on the functions
     included in the LowerBounds class.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-21)
     """
 
     # The default bound is 1
@@ -305,10 +289,6 @@ def upper_bound(g):
 
     The return value of this function may change depending on the functions
     included in the UpperBounds class.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-21)
     """
 
     # The default upper bound is the number of vertices
@@ -343,10 +323,6 @@ def matching_number(g):
 
     The Sage function matching() function is currently bugged, so this function
     will need to change in Sage v5.3.
-
-    AUTHORS:
-
-    - Patrick Gaskill (2012-08-28)
     """
 
     # Sage 5.2 currently returns 2*mu when ignoring edge labels!
@@ -374,13 +350,6 @@ class AlphaProperties(object):
         #     sage: AlphaProperties.is_disconnected(G)
         #     False
 
-        # NOTES:
-
-        # This property was added to solve the graph 'A?', or Graph(2).
-
-        # AUTHORS:
-
-        # - Patrick Gaskill (2012-08-21)
         # """
         # return not g.is_connected()
 
@@ -403,14 +372,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.has_max_degree_order_minus_one(G)
             True
 
-        NOTES:
-
-        This property was added to solve the graph 'BW', or
-        graphs.PathGraph(3).
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
         """
         return max(g.degree()) == g.num_verts() - 1
 
@@ -434,14 +395,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.is_claw_free(G)
             False
 
-        NOTES:
-
-        This property was added to solve the graph 'CU', or
-        graphs.PathGraph(4).
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
         """
         subsets = combinations_iterator(g.vertices(), 4)
         for subset in subsets:
@@ -468,13 +421,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.has_pendant_vertex(G)
             True
 
-        NOTES:
-
-        This property was added to solve the graph 'DCw'.
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
         """
         return 1 in g.degree_sequence()
 
@@ -497,9 +443,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.has_complete_closed_neighborhood(G)
             True
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-22)
         """
         for v in g.vertices():
             if g.subgraph(g.neighbors(v)).is_clique():
@@ -528,12 +471,7 @@ class AlphaProperties(object):
 
         NOTES:
 
-        This property was added to solve the graph 'DFw'. This will eventually
-        be made redundant by has_nonempty_KE_part() to be added later.
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-22)
+        This property is strictly weaker than is_KE().
         """
         return g.is_bipartite()
 
@@ -562,9 +500,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.is_KE(G)
             False
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-24)
         """
         alphaf = UpperBounds.fractional_alpha(g)
         mu = matching_number(g)
@@ -590,9 +525,6 @@ class AlphaProperties(object):
             sage: AlphaProperties.is_almost_KE(G)
             False
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-29)
         """
         subsets = combinations_iterator(g.vertices(), g.num_verts()-1)
         for subset in subsets:
@@ -615,14 +547,6 @@ class LowerBounds(object):
             sage: LowerBounds.matching_bound(G)
             1
 
-        NOTES:
-
-        This property was added to solve the graph 'A_', or
-        graphs.CompleteGraph(2).
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
         """
         return g.num_verts() - 2 * matching_number(g)
 
@@ -640,14 +564,6 @@ class UpperBounds(object):
             sage: UpperBounds.matching_bound(G)
             2
 
-        NOTES:
-
-        This property was added to solve the graph 'A_', or
-        graphs.CompleteGraph(2).
-
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-21)
         """
         return g.num_verts() - matching_number(g)
 
@@ -670,9 +586,6 @@ class UpperBounds(object):
             sage: UpperBounds.fractional_alpha(G)
             2.0
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-24)
         """
         p = MixedIntegerLinearProgram(maximization=True)
         x = p.new_variable()
@@ -717,9 +630,6 @@ class UpperBounds(object):
             sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
             4.000
 
-        AUTHORS:
-
-        - Patrick Gaskill (2012-08-27)
         """
         import cvxopt.base
         import cvxopt.solvers
