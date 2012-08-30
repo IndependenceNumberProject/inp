@@ -660,6 +660,37 @@ class AlphaProperties(object):
         mu = matching_number(g)
         return alphaf + mu == g.num_verts()
 
+    @staticmethod
+    def is_almost_KE(g):
+        r"""
+        Determine if a graph is almost KE, that is, if for any vertex v,
+        G-v is KE.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = graphs.CompleteGraph(3)
+            sage: AlphaProperties.is_almost_KE(G)
+            True
+
+        ::
+
+            sage: G = graphs.CompleteGraph(4)
+            sage: AlphaProperties.is_almost_KE(G)
+            False
+
+        AUTHORS:
+
+        - Patrick Gaskill (2012-08-29)
+        """
+        subsets = combinations_iterator(g.vertices(), g.num_verts()-1)
+        for subset in subsets:
+            if AlphaProperties.is_KE(g.subgraph(subset)):
+                return True
+
+        return False
+
 class LowerBounds(object):
     @staticmethod
     def matching_bound(g):
