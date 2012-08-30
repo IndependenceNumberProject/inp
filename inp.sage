@@ -184,14 +184,6 @@ def is_difficult(g):
     This function determines if a given Graph `g` is difficult as described by
     INP theory.
 
-    INPUT:
-
-    - ``g`` - sage.graphs.Graph -- the graph to be checked
-
-    OUTPUT:
-
-    - boolean -- return True if the input graph is considered difficult
-
     EXAMPLES:
 
     ::
@@ -225,14 +217,6 @@ def has_alpha_property(g):
     This function determines if a given Graph `g` satisifes any of the known
     alpha-properties.
 
-    INPUT:
-
-    - ``g`` - sage.graphs.Graph -- the graph to be checked
-
-    OUTPUT:
-
-    - boolean - return True if the graph satisfies any alpha-properties
-
     EXAMPLES:
 
     ::
@@ -261,14 +245,6 @@ def lower_bound(g):
     r"""
     This function computes a lower bound for the independence number of the
     given graph `g`.
-
-    INPUT:
-
-    - ``g`` - sage.graphs.Graph -- the graph to be checked
-
-    OUTPUT:
-
-    - integer -- a lower bound for the independence number of the graph
 
     EXAMPLES:
 
@@ -310,15 +286,7 @@ def upper_bound(g):
     This function computes an upper bound for the independence number of the
     given graph `g`.
 
-    INPUT:
-
-    - ``g`` - sage.graphs.Graph -- the graph to be checked
-
-    OUTPUT:
-
-    - integer -- an upper bound for the independence number of the graph
-
-   EXAMPLES:
+    EXAMPLES:
 
     ::
 
@@ -357,14 +325,6 @@ def matching_number(g):
     r"""
     Return the matching number of the graph.
 
-    INPUT:
-
-    - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-    OUTPUT:
-
-    - int -- The matching number of the graph
-
     EXAMPLES:
 
     ::
@@ -398,16 +358,8 @@ class AlphaProperties(object):
     #@staticmethod
     #def is_disconnected(g):
     #    r"""
-    #    Determine if the graph is disconnected.#
+    #    Determine if the graph is disconnected.
     #
-        # INPUT:
-
-        # - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        # OUTPUT:
-
-        # - boolean -- True if the graph is disconnected
-
         # EXAMPLES:
 
         # ::
@@ -436,14 +388,6 @@ class AlphaProperties(object):
     def has_max_degree_order_minus_one(g):
         r"""
         Determine if the graph has a vertex with degree `n(G)-1`.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph has a vertex with degree `n(G)-1`.
 
         EXAMPLES:
 
@@ -475,14 +419,6 @@ class AlphaProperties(object):
         r"""
         Determine if the graph contains a claw, i.e., an induced `K_{1,3}`
         subgraph.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph contains a claw
 
         EXAMPLES:
 
@@ -518,14 +454,6 @@ class AlphaProperties(object):
         r"""
         Determine if the graph contains a pendant vertex.
 
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph contains a pendant vertex
-
         EXAMPLES:
 
         ::
@@ -554,14 +482,6 @@ class AlphaProperties(object):
     def has_complete_closed_neighborhood(g):
         r"""
         Determine if the graph contains a complete closed neighborhood.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph contains a complete closed neighborhood.
 
         EXAMPLES:
 
@@ -592,14 +512,6 @@ class AlphaProperties(object):
         r"""
         Determine if the graph is bipartite.
 
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph is bipartite.
-
         EXAMPLES:
 
         ::
@@ -629,14 +541,6 @@ class AlphaProperties(object):
     def is_KE(g):
         r"""
         Determine if the graph is Konig-Egervary.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - boolean -- True if the graph is Konig-Egervary.
 
         EXAMPLES:
 
@@ -697,14 +601,6 @@ class LowerBounds(object):
         r"""
         Compute the matching number lower bound.
 
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - integer -- A lower bound on the independence number of the graph
-
         EXAMPLES:
 
         ::
@@ -730,13 +626,7 @@ class UpperBounds(object):
         r"""
         Compute the matching number upper bound.
 
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - integer -- An upper bound on the independence number of the graph
+        EXAMPLES:
 
         ::
 
@@ -759,14 +649,6 @@ class UpperBounds(object):
     def fractional_alpha(g):
         r"""
         Compute the fractional independence number of the graph.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - float -- The fractional independence number of the graph
 
         EXAMPLES:
 
@@ -801,16 +683,7 @@ class UpperBounds(object):
     @staticmethod
     def lovasz_theta(g):
         r"""
-        This function computes the value of the Lovasz theta function of the
-        given graph.
-
-        INPUT:
-
-        - ``g`` - sage.graphs.Graph -- The graph to be checked
-
-        OUTPUT:
-
-        - float -- The Lovasz theta function value for the graph
+        Compute the value of the Lovasz theta function of the given graph.
 
         EXAMPLES:
 
