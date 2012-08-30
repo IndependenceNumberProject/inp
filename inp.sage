@@ -238,8 +238,7 @@ def lower_bound(g):
 
     ::
 
-        sage: G = Graph(1)
-        sage: lower_bound(G)
+        sage: lower_bound(Graph(1))
         1
 
     ::
@@ -274,8 +273,7 @@ def upper_bound(g):
 
     ::
 
-        sage: G = Graph(1)
-        sage: upper_bound(G)
+        sage: upper_bound(Graph(1))
         1
 
     ::
@@ -309,14 +307,12 @@ def matching_number(g):
 
     ::
 
-        sage: G = graphs.PathGraph(3)
-        sage: matching_number(G)
+        sage: matching_number(graphs.PathGraph(3))
         1
 
     ::
 
-        sage: G = graphs.PathGraph(4)
-        sage: matching_number(G)
+        sage: matching_number(graphs.PathGraph(4))
         2
 
     WARNINGS:
@@ -362,8 +358,7 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = Graph(2)
-            sage: AlphaProperties.has_max_degree_order_minus_one(G)
+            sage: AlphaProperties.has_max_degree_order_minus_one(Graph(2))
             False
 
         ::
@@ -385,14 +380,12 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = Graph(2)
-            sage: AlphaProperties.is_claw_free(G)
+            sage: AlphaProperties.is_claw_free(Graph(2))
             True
 
         ::
 
-            sage: G = graphs.StarGraph(4)
-            sage: AlphaProperties.is_claw_free(G)
+            sage: AlphaProperties.is_claw_free(graphs.StarGraph(4))
             False
 
         """
@@ -411,14 +404,12 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = Graph(2)
-            sage: AlphaProperties.has_pendant_vertex(G)
+            sage: AlphaProperties.has_pendant_vertex(Graph(2))
             False
 
         ::
 
-            sage: G = graphs.StarGraph(4)
-            sage: AlphaProperties.has_pendant_vertex(G)
+            sage: AlphaProperties.has_pendant_vertex(graphs.StarGraph(4))
             True
 
         """
@@ -459,14 +450,12 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = graphs.CompleteGraph(4)
-            sage: AlphaProperties.is_bipartite(G)
+            sage: AlphaProperties.is_bipartite(graphs.CompleteGraph(4))
             False
 
         ::
 
-            sage: G = graphs.PathGraph(3)
-            sage: AlphaProperties.is_bipartite(G)
+            sage: AlphaProperties.is_bipartite(graphs.PathGraph(3))
             True
 
         NOTES:
@@ -484,38 +473,32 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = graphs.PathGraph(3)
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(graphs.PathGraph(3))
             True
 
         ::
 
-            sage: G = graphs.CycleGraph(3)
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(graphs.CycleGraph(3))
             False
 
         Not true that `\alpha_f + \mu = n` implies KE ::
 
-            sage: G = Graph('GCpvdw')
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(Graph('GCpvdw'))
             False
 
         The graph `H_1` from Levit-Mandrescu 2011 is KE ::
 
-            sage: G = Graph('Cx')
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(Graph('Cx'))
             True
 
         The graph `H_2` from Levit-Mandrescu 2011 is also KE ::
 
-            sage: G = Graph('FhcGO')
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(Graph('FhcGO'))
             True
 
         But `H_3` from Levit-Mandrescu 2011 is not KE ::
 
-            sage: G = Graph('DxC')
-            sage: AlphaProperties.is_KE(G)
+            sage: AlphaProperties.is_KE(Graph('DxC'))
             False
 
         """
@@ -533,14 +516,12 @@ class AlphaProperties(object):
 
         ::
 
-            sage: G = graphs.CompleteGraph(3)
-            sage: AlphaProperties.is_almost_KE(G)
+            sage: AlphaProperties.is_almost_KE(graphs.CompleteGraph(3))
             True
 
         ::
 
-            sage: G = graphs.CompleteGraph(4)
-            sage: AlphaProperties.is_almost_KE(G)
+            sage: AlphaProperties.is_almost_KE(graphs.CompleteGraph(4))
             False
 
         """
@@ -561,8 +542,7 @@ class LowerBounds(object):
 
         ::
 
-            sage: G = graphs.CompleteGraph(3)
-            sage: LowerBounds.matching_bound(G)
+            sage: LowerBounds.matching_bound(graphs.CompleteGraph(3))
             1
 
         """
@@ -578,8 +558,7 @@ class UpperBounds(object):
 
         ::
 
-            sage: G = graphs.CompleteGraph(3)
-            sage: UpperBounds.matching_bound(G)
+            sage: UpperBounds.matching_bound(graphs.CompleteGraph(3))
             2
 
         """
@@ -594,14 +573,12 @@ class UpperBounds(object):
 
         ::
 
-            sage: G = graphs.CompleteGraph(3)
-            sage: UpperBounds.fractional_alpha(G)
+            sage: UpperBounds.fractional_alpha(graphs.CompleteGraph(3))
             1.5
 
         ::
 
-            sage: G = graphs.PathGraph(3)
-            sage: UpperBounds.fractional_alpha(G)
+            sage: UpperBounds.fractional_alpha(graphs.PathGraph(3))
             2.0
 
         """
@@ -626,8 +603,7 @@ class UpperBounds(object):
 
         For an empty graph `G`, `\vartheta(G) = n`::
 
-            sage: G = Graph(2)
-            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            sage: UpperBounds.lovasz_theta(Graph(2)) # rel tol 1e-3
             2.000
 
         For a complete graph `G`, `\vartheta(G) = 1`::
