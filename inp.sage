@@ -16,6 +16,8 @@ AUTHORS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import cvxopt.base
+import cvxopt.solvers
 import datetime
 import inspect
 from string import Template
@@ -714,8 +716,6 @@ class UpperBounds(object):
             4.000
 
         """
-        import cvxopt.base
-        import cvxopt.solvers
 
         cvxopt.solvers.options['show_progress'] = False
         cvxopt.solvers.options['abstol'] = float(1e-10)
