@@ -117,7 +117,11 @@ def difficult_graph_search(verbose=True):
                 break
 
 def _export_latex_pdf(g, filepath, filename):
-    # Generate the latex for the information box
+    r"""
+    Generate the latex for the information box
+    
+    TODO: Handle pdflatex errors
+    """
     info_table = """
     \\rowcolor{{LightGray}} $n$ & {0} \\\\
     \\rowcolor{{LightGray}} $e$ & {1} \\\\
@@ -130,10 +134,10 @@ def _export_latex_pdf(g, filepath, filename):
         value = func(g)
         if value in ZZ:
             lowerbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', '\_')
+                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
         else:
             lowerbounds_table += \
-                "{0} & {1:.4f} \\\\\n".format(name, value).replace('_', '\_')
+                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
 
     # Generate the latex for the upper bounds table
     upperbounds_table = ''
@@ -141,16 +145,16 @@ def _export_latex_pdf(g, filepath, filename):
         value = func(g)
         if value in ZZ:
             upperbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', '\_')
+                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
         else:
             upperbounds_table += \
-                "{0} & {1:.4f} \\\\\n".format(name, value).replace('_', '\_')
+                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
 
     # Generate the latex for the alpha properties table
     alphaproperties_table = ''
     for name, func in inspect.getmembers(AlphaProperties, inspect.isfunction):
         alphaproperties_table += \
-            "{0} \\\\\n".format(name).replace('_', '\_')
+            "{0} \\\\\n".format(name).replace('_', r'\_').replace('~', r'{\textasciitilde}')
 
     # Insert all the generated latex into the template file
     template_file = open('dossier_template.tex', 'r')
@@ -644,7 +648,6 @@ class LowerBounds(object):
 
         return len(seq)
 
-
 class UpperBounds(object):
     @staticmethod
     def matching_bound(g):
@@ -700,26 +703,26 @@ class UpperBounds(object):
 
         For an empty graph `G`, `\vartheta(G) = n`::
 
-            sage: UpperBounds.lovasz_theta(Graph(2)) # rel tol 1e-3
-            2.000
+            sage: UpperBounds.lovasz_theta(Graph(2))
+            2.0
 
         For a complete graph `G`, `\vartheta(G) = 1`::
 
             sage: G = graphs.CompleteGraph(3)
-            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
-            1.000
+            sage: UpperBounds.lovasz_theta(G)
+            1.0
 
         For a pentagon (five-cycle) graph `G`, `\vartheta(G) = \sqrt{5}`::
 
             sage: G = graphs.CycleGraph(5)
-            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
+            sage: UpperBounds.lovasz_theta(G)
             2.236
 
         For the Petersen graph `G`, `\vartheta(G) = 4`::
 
             sage: G = graphs.PetersenGraph()
-            sage: UpperBounds.lovasz_theta(G) # rel tol 1e-3
-            4.000
+            sage: UpperBounds.lovasz_theta(G)
+            4.0
 
         """
         cvxopt.solvers.options['show_progress'] = False
@@ -745,4 +748,4 @@ class UpperBounds(object):
         sol = cvxopt.solvers.sdp(c, Gs=[-X], hs=[-cvxopt.base.matrix([0.0r]*(n*n-1r) + [-1.0r], (n,n))])
         v = 1.0r + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
-        return v[0r]
+        return round(v[0r], 3)
