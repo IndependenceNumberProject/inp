@@ -579,7 +579,8 @@ class AlphaProperties(object):
     def has_nonempty_KE_part(g):
         r"""
         Determine if the graph contains a nonempty KE part. A graph
-        contains a nonempty KE part if 
+        contains a nonempty KE part if has any vertices that are part of a 
+        maximum critical independent set.
 
         """
         if union_MCIS(g):
@@ -602,6 +603,39 @@ class LowerBounds(object):
 
         """
         return g.num_verts() - 2 * matching_number(g)
+
+    @staticmethod
+    def residue(g):
+        r"""
+        Compute the residue of the graph.
+
+        EXAMPLES:
+
+        ::
+
+            sage: LowerBounds.residue(graphs.CompleteGraph(3))
+            1
+
+        ::
+
+            sage: LowerBounds.residue(graphs.PathGraph(4))
+            2
+
+        ::
+
+            sage: LowerBounds.residue(Graph('GCOfuw'))
+            3
+
+        """
+        seq = sorted(g.degree_sequence(), reverse=True)
+
+        while seq[0] > 0:
+            d = seq.pop(0)
+            seq[:d] = [k-1 for k in seq[:d]]
+            seq.sort(reverse=True)
+
+        return len(seq)
+
 
 class UpperBounds(object):
     @staticmethod
