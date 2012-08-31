@@ -324,6 +324,67 @@ def matching_number(g):
     # Sage 5.2 currently returns 2*mu when ignoring edge labels!
     return Integer(g.matching(value_only=True, use_edge_labels=False)/2)
 
+def bidouble(g):
+    r"""
+    Return a bipartite double cover of g, also known as the bidouble of g.
+
+    EXAMPLES:
+
+    ::
+
+        sage: G = bidouble(graphs.CompleteGraph(3))
+        sage: G.is_isomorphic(graphs.CycleGraph(6))
+        True
+
+    """
+
+    # We can't use the quick way because we want to preserve vertex numbering
+    # return BipartiteGraph(data=g.adjacency_matrix())
+
+    offset = max(g.vertices()) + 1
+
+    b = Graph()
+    b.add_vertices(g.vertices() + [v+offset for v in g.vertices()])
+
+    for u, v in g.edge_iterator(labels=False):
+        b.add_edges([[u, v+offset], [u+offset, v]])
+
+    return b
+
+def union_MCIS(g):
+    r"""
+    Return a union of maximum critical independent sets (MCIS) in g.
+
+    EXAMPLES:
+
+    ::
+
+        sage: union_MCIS(Graph('Cx'))
+        [0, 1, 3]
+
+    ::
+
+        sage: union_MCIS(graphs.CycleGraph(4))
+        [0, 1, 2, 3]
+
+    """
+
+    offset = max(g.vertices()) + 1
+    b = bidouble(g)
+    # Since b is bipartite, we may use alpha = n - mu
+    alpha = b.num_verts() - matching_number(b)
+
+    result = []
+
+    for v in g.vertices():
+        to_delete = [v, v+offset] + b.neighbors(v) + b.neighbors(v+offset)
+        test_graph = b.copy()
+        test_graph.delete_vertices(to_delete)
+        alpha_test = test_graph.num_verts() - matching_number(test_graph) + 2
+        if alpha_test == alpha:
+            result.append(v)
+
+    return result
 
 class AlphaProperties(object):
     @staticmethod
@@ -479,9 +540,14 @@ class AlphaProperties(object):
             False
 
         """
-        alphaf = UpperBounds.fractional_alpha(g)
-        mu = matching_number(g)
-        return alphaf + mu == g.num_verts()
+        
+        c = union_MCIS(g)
+
+        nc = []
+        for v in c:
+            nc.extend(g.neighbors(v))
+
+        return list(set(c + nc)) == g.vertices()
 
     @staticmethod
     def is_almost_KE(g):
