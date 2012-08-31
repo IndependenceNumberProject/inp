@@ -224,7 +224,6 @@ def has_alpha_property(g):
     The return value of this function may change depending on the functions
     included in the AlphaProperties class.
     """
-
     # Loop through all the functions in the AlphaProperties class
     for name, func in inspect.getmembers(AlphaProperties, inspect.isfunction):
         if func(g):
@@ -255,7 +254,6 @@ def lower_bound(g):
     The return value of this function may change depending on the functions
     included in the LowerBounds class.
     """
-
     # The default bound is 1
     lbound = 1
 
@@ -322,7 +320,6 @@ def matching_number(g):
     The Sage function matching() function is currently bugged, so this function
     will need to change in Sage v5.3.
     """
-
     # Sage 5.2 currently returns 2*mu when ignoring edge labels!
     return Integer(g.matching(value_only=True, use_edge_labels=False)/2)
 
@@ -339,7 +336,6 @@ def bidouble(g):
         True
 
     """
-
     # We can't use the quick way because we want to preserve vertex numbering
     # return BipartiteGraph(data=g.adjacency_matrix())
 
@@ -370,7 +366,6 @@ def union_MCIS(g):
         [0, 1, 2, 3]
 
     """
-
     offset = max(g.vertices()) + 1
     b = bidouble(g)
     # Since b is bipartite, we may use alpha = n - mu
@@ -542,7 +537,6 @@ class AlphaProperties(object):
             False
 
         """
-        
         c = union_MCIS(g)
 
         nc = []
@@ -716,7 +710,6 @@ class UpperBounds(object):
             4.000
 
         """
-
         cvxopt.solvers.options['show_progress'] = False
         cvxopt.solvers.options['abstol'] = float(1e-10)
         cvxopt.solvers.options['reltol'] = float(1e-10)
