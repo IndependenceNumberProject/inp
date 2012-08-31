@@ -578,6 +578,18 @@ class AlphaProperties(object):
         contains a nonempty KE part if has any vertices that are part of a 
         maximum critical independent set.
 
+        EXAMPLES:
+
+        ::
+
+            sage: AlphaProperties.has_nonempty_KE_part(graphs.PathGraph(3))
+            True
+
+        ::
+
+            sage: AlphaProperties.has_nonempty_KE_part(graphs.CompleteGraph(4))
+            False
+
         """
         if union_MCIS(g):
             return True
