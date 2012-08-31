@@ -575,6 +575,18 @@ class AlphaProperties(object):
 
         return False
 
+        @staticmethod
+        def has_nonempty_KE_part(g):
+            r"""
+            Determine if the graph contains a nonempty KE part. A graph
+            contains a nonempty KE part if 
+
+            """
+            if union_MCIS(g):
+                return True
+            else:
+                return False
+
 class LowerBounds(object):
     @staticmethod
     def matching_bound(g):
