@@ -639,7 +639,7 @@ class LowerBounds(object):
             3
 
         """
-        seq = sorted(g.degree_sequence(), reverse=True)
+        seq = g.degree_sequence()
 
         while seq[0] > 0:
             d = seq.pop(0)
@@ -723,6 +723,8 @@ class UpperBounds(object):
             sage: G = graphs.PetersenGraph()
             sage: UpperBounds.lovasz_theta(G)
             4.0
+
+        TODO: This could probably be written better.
 
         """
         cvxopt.solvers.options['show_progress'] = False
