@@ -39,20 +39,6 @@ def difficult_graph_search(verbose=True):
     sage.graphs.Graph -- the first difficult graph encountered in the order
     given by `nauty_geng`.
 
-    EXAMPLES:
-
-    ::
-
-        sage: G = difficult_graph_search(verbose=False) # long time
-        sage: isinstance(G, Graph) # long time
-        True
-
-    ::
-
-        sage: G = difficult_graph_search(verbose=False) # long time
-        sage: is_difficult(G) # long time
-        True
-
     NOTES:
 
     The return value of this function may change depending on the functions
@@ -186,14 +172,6 @@ def is_difficult(g):
     This function determines if a given Graph `g` is difficult as described by
     INP theory.
 
-    EXAMPLES:
-
-    ::
-
-        sage: G = Graph(1)
-        sage: is_difficult(G)
-        False
-
     NOTES:
 
     The return value of this function may change depending on the functions
@@ -215,14 +193,6 @@ def has_alpha_property(g):
     This function determines if a given Graph `g` satisifes any of the known
     alpha-properties.
 
-    EXAMPLES:
-
-    ::
-
-        sage: G = difficult_graph_search(verbose=False) # long time
-        sage: has_alpha_property(G) # long time
-        False
-
     NOTES:
 
     The return value of this function may change depending on the functions
@@ -230,28 +200,17 @@ def has_alpha_property(g):
     """
     # Loop through all the functions in the AlphaProperties class
     for name, func in inspect.getmembers(AlphaProperties, inspect.isfunction):
-        if func(g):
-            return True
+        try:
+            if func(g):
+                return True
+        except ValueError:
+            pass
     return False
 
 def lower_bound(g):
     r"""
     This function computes a lower bound for the independence number of the
     given graph `g`.
-
-    EXAMPLES:
-
-    ::
-
-        sage: lower_bound(Graph(1))
-        1
-
-    ::
-
-        sage: G = graphs.CompleteGraph(3)
-        sage: lbound = lower_bound(G)
-        sage: lbound >= 1 and lbound <= G.num_verts()
-        True
 
     NOTES:
 
@@ -263,29 +222,18 @@ def lower_bound(g):
 
     # Loop through all the functions in LowerBounds class
     for name, func in inspect.getmembers(LowerBounds, inspect.isfunction):
-        new_bound = func(g)
-        if new_bound > lbound:
-            lbound = new_bound
+        try:
+            new_bound = func(g)
+            if new_bound > lbound:
+                lbound = new_bound
+        except ValueError:
+            pass
     return lbound
 
 def upper_bound(g):
     r"""
     This function computes an upper bound for the independence number of the
     given graph `g`.
-
-    EXAMPLES:
-
-    ::
-
-        sage: upper_bound(Graph(1))
-        1
-
-    ::
-
-        sage: G = graphs.CompleteGraph(3)
-        sage: ubound = upper_bound(G)
-        sage: ubound >= 1 and ubound <= G.num_verts()
-        True
 
     NOTES:
 
@@ -298,9 +246,12 @@ def upper_bound(g):
 
     # Loop through all the functions in UpperBounds class
     for name, func in inspect.getmembers(UpperBounds, inspect.isfunction):
-        new_bound = func(g)
-        if new_bound < ubound:
-            ubound = new_bound
+        try:
+            new_bound = func(g)
+            if new_bound < ubound:
+                ubound = new_bound
+        except ValueError:
+            pass
     return ubound
 
 def matching_number(g):
@@ -751,3 +702,163 @@ class UpperBounds(object):
         v = 1.0r + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
         return round(v[0r], 3)
+
+    @staticmethod
+    def kwok(g):
+        r"""
+        Compute the upper bound `\alpha \leq n - \frac{e}{\Delta}` that is
+        credited to Kwok, or possibly "folklore."
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.kwok(graphs.CompleteGraph(3))
+            3/2
+
+        ::
+
+            sage: UpperBounds.kwok(graphs.PathGraph(3))
+            2
+
+        """
+        n = Integer(g.num_verts())
+        e = Integer(g.num_edges())
+        Delta = Integer(max(g.degree()))
+
+        if Delta == 0:
+            raise ValueError("Kwok bound is not defined for graphs with maximum degree 0.")
+
+        return n - e / Delta
+
+    @staticmethod
+    def hansen_zheng(g):
+        r"""
+        Compute an upper bound `\frac{1}{2} + \sqrt{\frac{1/4} + n^2 - n - 2e}` 
+        given by Hansen and Zheng, 1993.
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.hansen_zheng(graphs.CompleteGraph(3))
+            1
+
+        """
+        n = Integer(g.num_verts())
+        e = Integer(g.num_edges())
+        return floor(.5 + sqrt(.25 + n^2 - n - 2*e))
+
+    @staticmethod
+    def min_degree_bound(g):
+        r"""
+        Compute the upper bound `\alpha \leq n - \delta`. This bound probably
+        belong to "folklore."
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.min_degree_bound(graphs.CompleteGraph(3))
+            1
+
+        ::
+
+            sage: UpperBounds.min_degree_bound(graphs.PathGraph(4))
+            3
+
+        """
+        return g.num_verts() - min(g.degree())
+
+    @staticmethod
+    def cvetkovic(g):
+        r"""
+        Compute the Cvetkovic bound `\alpha \leq p_0 + min\{p_-, p_+\}`, where
+        `p_-, p_0, p_+` denote the negative, zero, and positive eigenvalues 
+        of the adjacency matrix of the graph respectively.
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.cvetkovic(graphs.PetersenGraph())
+            4
+
+        """
+        eigenvalues = g.adjacency_matrix().eigenvalues()
+        [positive, negative, zero] = [0, 0, 0]
+        for e in eigenvalues:
+            if e > 0:
+                positive += 1
+            elif e < 0:
+                negative += 1
+            else:
+                zero += 1
+
+        return zero + min([positive, negative])
+
+    @staticmethod
+    def annihilation_number(g):
+        r"""
+        Compute the annhilation number of the graph.
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.annihilation_number(graphs.CompleteGraph(3))
+            2
+
+        ::
+
+            sage: UpperBounds.annihilation_number(graphs.StarGraph(3))
+            4
+
+        """
+        seq = sorted(g.degree())
+        n = g.num_verts()
+
+        a = 1
+        # I'm not sure the a <= condition is needed but sage hangs while
+        # running tests if it's not there.
+        while a <= n and sum(seq[:a]) <= sum(seq[a:]):
+            a += 1
+
+        return a
+
+    @staticmethod
+    def borg(g):
+        r"""
+        Compute the upper bound given by Borg.
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.borg(graphs.CompleteGraph(3))
+            2
+
+        """
+        n = Integer(g.num_verts())
+        Delta = Integer(max(g.degree()))
+
+        if Delta == 0:
+            raise ValueError("Borg bound is not defined for graphs with maximum degree 0.")
+
+        return n - ceil((n-1) / Delta)
+
+    @staticmethod
+    def cut_vertices_bound(g):
+        r"""
+
+        EXAMPLES:
+
+        ::
+
+            sage: UpperBounds.cut_vertices_bound(graphs.PathGraph(5))
+            3
+
+        """
+        n = Integer(g.num_verts())
+        C = Integer(len(g.blocks_and_cut_vertices()[1]))
+        return n - C/2 - 1/2
