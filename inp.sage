@@ -6,7 +6,7 @@ AUTHORS:
 - Patrick Gaskill (2012-08-21): initial version
 """
 
-#*****************************************************************************
+#**********************************************************
 #       Copyright (C) 2012 Patrick Gaskill <gaskillpw@vcu.edu>
 #       Copyright (C) 2012 Craig Larson <clarson@vcu.edu>
 #
