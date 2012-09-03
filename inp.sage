@@ -819,7 +819,7 @@ class UpperBounds(object):
         n = g.num_verts()
 
         a = 1
-        # I'm not sure the a <= condition is needed but sage hangs while
+        # I'm not sure the a <= n condition is needed but sage hangs while
         # running tests if it's not there.
         while a <= n and sum(seq[:a]) <= sum(seq[a:]):
             a += 1
