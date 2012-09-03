@@ -46,8 +46,7 @@ def difficult_graph_search(verbose=True):
     """
     n = 1
     count = 0
- """ha ha ha""""
- 
+
     while True:
 
         if verbose:
