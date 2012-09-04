@@ -338,6 +338,29 @@ def union_MCIS(g):
 
     return result
 
+def test_lower_bound_equality(func, n):
+    r"""
+    """
+    total_count = 0
+    match_count = 0
+    gen = graphs.nauty_geng("{0}".format(n))
+
+    while True:
+        try:
+            g = gen.next()
+            alpha = len(g.independent_set())
+            alpha_test = ceil(func(g))
+
+            total_count += 1
+
+            if alpha == alpha_test:
+                match_count += 1
+
+        except StopIteration:
+            break
+
+    print "{0} out of {1} graphs match.".format(match_count, total_count)
+
 class AlphaProperties(object):
     @staticmethod
     def has_max_degree_order_minus_one(g):
