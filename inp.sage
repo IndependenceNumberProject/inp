@@ -622,6 +622,17 @@ class LowerBounds(object):
 
         return len(seq)
 
+    def average_degree_bound(g):
+        r"""
+        Compute an upper bound using the average degree of the graph, one of
+        the oldest non-trivial bounds and a consequence of the celebrated
+        theorem of Turan.
+
+        """
+        n = Integer(g.num_verts())
+        d = Rational(g.average_degree())
+        return n / (1+d)
+
 class UpperBounds(object):
     @staticmethod
     def matching_bound(g):
