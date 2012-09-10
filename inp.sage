@@ -633,6 +633,24 @@ class LowerBounds(object):
         d = Rational(g.average_degree())
         return n / (1+d)
 
+    def caro_wei(g):
+        r"""
+
+        EXAMPLES:
+
+        ::
+
+            sage: LowerBounds.caro_wei(graphs.CompleteGraph(3))
+            1
+
+        ::
+
+            sage: LowerBounds.caro_wei(graphs.PathGraph(3))
+            4/3
+
+        """
+        return sum([1/(1+Integer(d)) for d in g.degree()])
+
 class UpperBounds(object):
     @staticmethod
     def matching_bound(g):
