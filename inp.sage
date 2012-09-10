@@ -653,6 +653,31 @@ class LowerBounds(object):
         """
         return sum([1/(1+Integer(d)) for d in g.degree()])
 
+    @staticmethod
+    def wilf(g):
+        r"""
+        """
+        n = Integer(g.num_verts())
+        max_eigenvalue = max(g.adjacency_matrix().eigenvalues())
+        return n / (1 + max_eigenvalue)
+
+    @staticmethod
+    def hansen_zheng(g):
+        r"""
+        """
+        n = Integer(g.num_verts())
+        e = Integer(g.num_edges())
+        return ceil(n - (2 * e)/(1 + floor(2 * e / n)))
+
+    @staticmethod
+    def harant(g):
+        r"""
+        """
+        n = Integer(g.num_verts())
+        e = Integer(g.num_edges())
+        term = 2 * e + n + 1
+        return (1/2) * ( term - sqrt(term**2 - 4*(n**2)) )
+
 class UpperBounds(object):
     @staticmethod
     def matching_bound(g):
