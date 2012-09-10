@@ -622,6 +622,7 @@ class LowerBounds(object):
 
         return len(seq)
 
+    @staticmethod
     def average_degree_bound(g):
         r"""
         Compute an upper bound using the average degree of the graph, one of
@@ -633,6 +634,7 @@ class LowerBounds(object):
         d = Rational(g.average_degree())
         return n / (1+d)
 
+    @staticmethod
     def caro_wei(g):
         r"""
 
