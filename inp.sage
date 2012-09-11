@@ -118,23 +118,35 @@ def _export_latex_pdf(g, filepath, filename):
     lowerbounds_table = ''
     for name, func in inspect.getmembers(LowerBounds, inspect.isfunction):
         value = func(g)
-        if value in ZZ:
+
+        try:
+            if value in ZZ:
+                lowerbounds_table += \
+                    "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+            else:
+                lowerbounds_table += \
+                   "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+        except (AttributeError, ValueError):
+            print "Can't format", name, value, "for LaTeX output."
             lowerbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
-        else:
-            lowerbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
+                "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
 
     # Generate the latex for the upper bounds table
     upperbounds_table = ''
     for name, func in inspect.getmembers(UpperBounds, inspect.isfunction):
         value = func(g)
-        if value in ZZ:
+
+        try:
+            if value in ZZ:
+                upperbounds_table += \
+                    "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+            else:
+                upperbounds_table += \
+                    "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+        except (AttributeError, ValueError):
+            print "Can't format", name, value, "for LaTeX output."
             upperbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
-        else:
-            upperbounds_table += \
-                "{0} & {1} \\\\\n".format(name, value).replace('_', r'\_')
+                "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
 
     # Generate the latex for the alpha properties table
     alphaproperties_table = ''
@@ -588,7 +600,9 @@ class LowerBounds(object):
             1
 
         """
-        return g.num_verts() - 2 * matching_number(g)
+        n = Integer(g.num_verts())
+        mu = Integer(matching_number(g))
+        return n - 2 * mu
 
     @staticmethod
     def residue(g):
@@ -620,7 +634,7 @@ class LowerBounds(object):
             seq[:d] = [k-1 for k in seq[:d]]
             seq.sort(reverse=True)
 
-        return len(seq)
+        return Integer(len(seq))
 
     @staticmethod
     def average_degree_bound(g):
@@ -655,28 +669,22 @@ class LowerBounds(object):
 
     @staticmethod
     def wilf(g):
-        r"""
-        """
         n = Integer(g.num_verts())
         max_eigenvalue = max(g.adjacency_matrix().eigenvalues())
         return n / (1 + max_eigenvalue)
 
     @staticmethod
     def hansen_zheng(g):
-        r"""
-        """
         n = Integer(g.num_verts())
         e = Integer(g.num_edges())
         return ceil(n - (2 * e)/(1 + floor(2 * e / n)))
 
     @staticmethod
     def harant(g):
-        r"""
-        """
         n = Integer(g.num_verts())
         e = Integer(g.num_edges())
         term = 2 * e + n + 1
-        return (1/2) * ( term - sqrt(term**2 - 4*(n**2)) )
+        return (1/2) * ( term - sqrt(term^2 - 4*n^2) )
 
 class UpperBounds(object):
     @staticmethod
@@ -722,7 +730,7 @@ class UpperBounds(object):
         for (u,v) in g.edge_iterator(labels=False):
             p.add_constraint(x[u] + x[v], max=1)
 
-        return p.solve()
+        return RR(p.solve())
 
     @staticmethod
     def lovasz_theta(g):
@@ -847,7 +855,7 @@ class UpperBounds(object):
             3
 
         """
-        return g.num_verts() - min(g.degree())
+        return Integer(g.num_verts() - min(g.degree()))
 
     @staticmethod
     def cvetkovic(g):
