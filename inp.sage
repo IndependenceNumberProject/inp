@@ -586,6 +586,17 @@ class AlphaProperties(object):
         else:
             return False
 
+    @staticmethod
+    def is_foldable(g):
+        if 2 in g.degree():
+            return True
+
+        for v in g.vertices():
+            if g.degree(v) == 3 and g.subgraph(g.neighbors(v)).num_edges >= 1:
+                return True
+
+        return False
+
 class LowerBounds(object):
     @staticmethod
     def matching_bound(g):
