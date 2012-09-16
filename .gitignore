@@ -1,6 +1,3 @@
-# Ignore all the folders that inp.sage generates
-difficult_graph_*
-
 # Ignore pdflatex's log
 .log
 
