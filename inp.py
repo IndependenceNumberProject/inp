@@ -18,16 +18,18 @@ AUTHORS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-#import cvxopt.base
-##import cvxopt.solvers
+import cvxopt.base
+import cvxopt.solvers
 #import datetime
 #from string import Template
 #import subprocess
 #import sys
 #import time
 
+# TODO: Include more functions from survey
+
 import sage.all
-from sage.all import Graph, graphs
+from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, MixedIntegerLinearProgram
 
 try:
     from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
@@ -115,7 +117,7 @@ class INPGraph(Graph):
         included in the __upper_bounds setting.
         """
         # The default upper bound is the number of vertices
-        ubound = g.order()
+        ubound = self.order()
 
         for func in self.__upper_bounds:
             try:
@@ -327,7 +329,7 @@ class INPGraph(Graph):
     def has_simplicial_vertex(self):
         # TODO: Write tests
         for v in self.vertices():
-            if self.subgraph(g.neighbors(v)).is_clique():
+            if self.subgraph(self.neighbors(v)).is_clique():
                 return True
 
         return False
@@ -338,7 +340,7 @@ class INPGraph(Graph):
         c = self.union_MCIS()
         nc = []
         for v in c:
-            nc.extend(g.neighbors(v))
+            nc.extend(self.neighbors(v))
 
         return list(set(c + nc)) == self.vertices()
     is_KE.__is_alpha_property = True
@@ -367,6 +369,23 @@ class INPGraph(Graph):
         pass
     is_foldable.__is_alpha_property = True
 
+    def matching_lower_bound(self):
+        # TODO: Write better tests
+        r"""
+        Compute the matching number lower bound.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.matching_lower_bound()
+            1
+
+        """
+        return self.order() - 2 * self.matching_number()
+    matching_lower_bound.__is_lower_bound = True
+
     def residue(self):
         # TODO: Write tests
         seq = self.degree_sequence()
@@ -386,6 +405,329 @@ class INPGraph(Graph):
         return n / (1 + d)
     average_degree_bound.__is_lower_bound = True
 
-    # TODO: Include more functions from survey
-    # TODO: Include functions from old code
-    
+    def caro_wei(self):
+        # TODO: Write better tests
+        r"""
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.caro_wei()
+            1
+
+        ::
+
+            sage: G = INPGraph(graphs.PathGraph(3))
+            sage: G.caro_wei()
+            4/3
+
+        """
+        return sum([1/(1+Integer(d)) for d in self.degree()])
+    caro_wei.__is_lower_bound = True
+
+    def wilf(self):
+        # TODO: Write tests
+        n = Integer(self.order())
+        max_eigenvalue = max(self.adjacency_matrix().eigenvalues())
+        return n / (1 + max_eigenvalue)
+    wilf.__is_lower_bound = True
+
+    def hansen_zheng_lower_bound(self):
+        # TODO: Write tests
+        n = Integer(self.order())
+        e = Integer(self.size())
+        return ceil(n - (2 * e)/(1 + floor(2 * e / n)))
+    hansen_zheng_lower_bound.__is_lower_bound = True
+
+    def harant(self):
+        # TODO: Write tests
+        n = Integer(self.order())
+        e = Integer(self.size())
+        term = 2 * e + n + 1
+        return (1/2) * (term - sqrt(term^2 - 4*n^2))
+    harant.__is_lower_bound = True
+
+    def matching_upper_bound(self):
+        # TODO: Write better tests
+        r"""
+        Compute the matching number upper bound.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.matching_upper_bound()
+            2
+
+        """
+        return self.order() - self.matching_number()
+    matching_upper_bound.__is_upper_bound = True
+
+    def fractional_alpha(self):
+        # TODO: Write better tests
+        r"""
+        Compute the fractional independence number of the graph.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.fractional_alpha()
+            1.5
+
+        ::
+
+            sage: G = INPGraph(graphs.PathGraph(3))
+            sage: G.fractional_alpha()
+            2.0
+
+        """
+        p = MixedIntegerLinearProgram(maximization=True)
+        x = p.new_variable()
+        p.set_objective(sum([x[v] for v in self.vertices()]))
+
+        for v in self.vertices():
+            p.add_constraint(x[v], max=1)
+
+        for (u,v) in self.edge_iterator(labels=False):
+            p.add_constraint(x[u] + x[v], max=1)
+
+        return p.solve()
+    fractional_alpha.__is_upper_bound = True
+
+    def lovasz_theta(self):
+        # TODO: Write better tests
+        # TODO: There has to be a nicer way of doing this.
+        r"""
+        Compute the value of the Lovasz theta function of the given graph.
+
+        EXAMPLES:
+
+        For an empty graph `G`, `\vartheta(G) = n`::
+
+            sage: G = INPGraph(2)
+            sage: G.lovasz_theta()
+            2.0
+
+        For a complete graph `G`, `\vartheta(G) = 1`::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.lovasz_theta()
+            1.0
+
+        For a pentagon (five-cycle) graph `G`, `\vartheta(G) = \sqrt{5}`::
+
+            sage: G = INPGraph(graphs.CycleGraph(5))
+            sage: G.lovasz_theta()
+            2.236
+
+        For the Petersen graph `G`, `\vartheta(G) = 4`::
+
+            sage: G = INPGraph(graphs.PetersenGraph())
+            sage: G.lovasz_theta()
+            4.0
+        """
+        cvxopt.solvers.options['show_progress'] = False
+        cvxopt.solvers.options['abstol'] = float(1e-10)
+        cvxopt.solvers.options['reltol'] = float(1e-10)
+
+        gc = self.complement()
+        n = gc.order()
+        m = gc.size()
+
+        if n == 1:
+            return 1.0
+
+        d = m + n
+        c = -1 * cvxopt.base.matrix([0.0]*(n-1) + [2.0]*(d-n))
+        Xrow = [i*(1+n) for i in xrange(n-1)] + [b+a*n for (a, b) in gc.edge_iterator(labels=False)]
+        Xcol = range(n-1) + range(d-1)[n-1:]
+        X = cvxopt.base.spmatrix(1.0, Xrow, Xcol, (n*n, d-1))
+
+        for i in xrange(n-1):
+            X[n*n-1, i] = -1.0
+
+        sol = cvxopt.solvers.sdp(c, Gs=[-X], hs=[-cvxopt.base.matrix([0.0]*(n*n-1) + [-1.0], (n,n))])
+        v = 1.0 + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
+
+        return round(v[0], 3)
+    lovasz_theta.__is_upper_bound = True
+
+    def kwok(self):
+        # TODO: Write better tests
+        r"""
+        Compute the upper bound `\alpha \leq n - \frac{e}{\Delta}` that is
+        credited to Kwok, or possibly "folklore."
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.kwok()
+            3/2
+
+        ::
+
+            sage: G = INPGraph(graphs.PathGraph(3))
+            sage: G.kwok()
+            2
+
+        """
+        n = Integer(self.order())
+        e = Integer(self.size())
+        Delta = Integer(self.max_degree())
+
+        if Delta == 0:
+            raise ValueError("Kwok bound is not defined for graphs with maximum degree 0.")
+
+        return n - e / Delta
+    kwok.__is_upper_bound = True
+
+    def hansen_zheng_upper_bound(self):
+        # TODO: Write better tests
+        r"""
+        Compute an upper bound `\frac{1}{2} + \sqrt{\frac{1/4} + n^2 - n - 2e}` 
+        given by Hansen and Zheng, 1993.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.hansen_zheng_upper_bound()
+            1
+
+        """
+        n = Integer(self.order())
+        e = Integer(self.size())
+        return floor(.5 + sqrt(.25 + n**2 - n - 2*e))
+    hansen_zheng_upper_bound.__is_upper_bound = True
+
+    def min_degree_bound(self):
+        r"""
+        Compute the upper bound `\alpha \leq n - \delta`. This bound probably
+        belong to "folklore."
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.min_degree_bound()
+            1
+
+        ::
+
+            sage: G = INPGraph(graphs.PathGraph(4))
+            sage: G.min_degree_bound()
+            3
+
+        """
+        return self.order() - self.min_degree()
+    min_degree_bound.__is_upper_bound = True
+
+    def cvetkovic(self):
+        # TODO: Write better tests
+        r"""
+        Compute the Cvetkovic bound `\alpha \leq p_0 + min\{p_-, p_+\}`, where
+        `p_-, p_0, p_+` denote the negative, zero, and positive eigenvalues 
+        of the adjacency matrix of the graph respectively.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.PetersenGraph())
+            sage: G.cvetkovic()
+            4
+
+        """
+        eigenvalues = self.adjacency_matrix().eigenvalues()
+        [positive, negative, zero] = [0, 0, 0]
+        for e in eigenvalues:
+            if e > 0:
+                positive += 1
+            elif e < 0:
+                negative += 1
+            else:
+                zero += 1
+
+        return zero + min([positive, negative])
+    cvetkovic.__is_upper_bound = True
+
+    def annihilation_number(self):
+        # TODO: Write better tests
+        r"""
+        Compute the annhilation number of the graph.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.annihilation_number()
+            2
+
+        ::
+
+            sage: G = INPGraph(graphs.StarGraph(3))
+            sage: G.annihilation_number()
+            4
+
+        """
+        seq = sorted(self.degree())
+        n = self.order()
+
+        a = 1
+        # TODO: I'm not sure the a <= n condition is needed but sage hangs while
+        # running tests if it's not there.
+        while a <= n and sum(seq[:a]) <= sum(seq[a:]):
+            a += 1
+
+        return a
+    annihilation_number.__is_upper_bound = True
+
+    def borg(self):
+        # TODO: Write better tests
+        r"""
+        Compute the upper bound given by Borg.
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.CompleteGraph(3))
+            sage: G.borg()
+            2
+
+        """
+        n = Integer(self.order())
+        Delta = Integer(self.max_degree())
+
+        if Delta == 0:
+            raise ValueError("Borg bound is not defined for graphs with maximum degree 0.")
+
+        return n - ceil((n-1) / Delta)
+    borg.__is_upper_bound = True
+
+    def cut_vertices_bound(self):
+        r"""
+
+        EXAMPLES:
+
+        ::
+
+            sage: G = INPGraph(graphs.PathGraph(5))
+            sage: G.cut_vertices_bound()
+            3
+
+        """
+        n = Integer(self.order())
+        C = Integer(len(self.blocks_and_cut_vertices()[1]))
+        return n - C/2 - Integer(1)/2
+    cut_vertices_bound.__is_upper_bound = True
