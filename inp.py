@@ -20,29 +20,30 @@ AUTHORS:
 
 import cvxopt.base
 import cvxopt.solvers
-#import datetime
-#from string import Template
+import datetime
+from string import Template
+import os
 import re
 import subprocess
 import sys
 import time
 
 # TODO: Include more functions from survey
-# TODO: Write surveying functions to test one function against a given order
 # TODO: Get PDF exporting working again
 
 from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
                      MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
 
-try:
-    from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
-    _has_progressbar = True
-except ImportError:
-    _has_progressbar = False
-
 class INPGraph(Graph):
     _nauty_count_pattern = re.compile(r'>Z (\d+) graphs generated')
+    _save_path = os.path.expanduser("~/Dropbox/INP/")
+
+    try:
+        from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
+        _has_progressbar = True
+    except ImportError:
+        _has_progressbar = False
 
     def __init__(self, *args, **kwargs):
         Graph.__init__(self, *args, **kwargs)
@@ -141,6 +142,7 @@ class INPGraph(Graph):
                     if verbose:
                         pbar.finish()
                         print "Found a difficult graph: {0}".format(g.graph6_string())
+                        g.save_files()
                     return g
 
                 counter += 1
@@ -295,11 +297,107 @@ class INPGraph(Graph):
 
         return False
 
-    def write_to_pdf(self):
-        # TODO: Write this function
-        # TODO: Is it possible to write good tests for this?
-        # TODO: The latex template should be written using .sty files
-        pass
+    def save_files(self):
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = "difficult_graph_{0}".format(timestamp)
+        folder_path = "{0}/{1}".format(self._save_path, filename)
+
+        try:
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+        except IOError:
+            "Can't make directory {0}".format(folder_path)
+
+        try:
+            self.plot().save("{0}/{1}.png".format(folder_path, filename))
+            print "Plot saved."
+        except IOError:
+            print "Couldn't save {0}.png".format(filename)
+
+        try:
+            self._export_pdf(folder_path, filename)
+            print "Dossier saved."
+        except IOError:
+            print "Couldn't save {0}.pdf".format(filename)
+
+    def _export_pdf(self, folder_path, filename):
+        r"""
+        Generate the latex for the information box.
+        """
+        info_table = """
+        \\rowcolor{{LightGray}} $n$ & {0} \\\\
+        \\rowcolor{{LightGray}} $e$ & {1} \\\\
+        \\rowcolor{{LightGray}} $\\alpha$ & {2} \\\\
+        """.format(self.order(), self.size(), self.independence_number())
+
+        # Generate the latex for the lower bounds table
+        lowerbounds_table = ''
+        for func in self._lower_bounds:
+            name = func.__name__
+            value = func(g)
+
+            try:
+                if value in ZZ:
+                    lowerbounds_table += \
+                        "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+                else:
+                    lowerbounds_table += \
+                       "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+            except (AttributeError, ValueError):
+                print "Can't format", name, value, "for LaTeX output."
+                lowerbounds_table += \
+                    "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
+
+        # Generate the latex for the upper bounds table
+        upperbounds_table = ''
+        for func in self._upper_bounds:
+            name = func.__name__
+            value = func(g)
+
+            try:
+                if value in ZZ:
+                    upperbounds_table += \
+                        "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+                else:
+                    upperbounds_table += \
+                        "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+            except (AttributeError, ValueError):
+                print "Can't format", name, value, "for LaTeX output."
+                upperbounds_table += \
+                    "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
+
+        # Generate the latex for the alpha properties table
+        alphaproperties_table = ''
+        for func in self._alpha_properties:
+            name = func.__name__
+            alphaproperties_table += \
+                "{0} \\\\\n".format(name).replace('_', r'\_').replace('~', r'{\textasciitilde}')
+
+        # Insert all the generated latex into the template file
+        template_file = open('dossier_template.tex', 'r')
+        template = template_file.read()
+        s = Template(template)
+
+        output = s.substitute(graph=latex(self), 
+                              name=self.graph6_string().replace('_', '\_'),
+                              info=info_table,
+                              lowerbounds=lowerbounds_table, 
+                              upperbounds=upperbounds_table,
+                              alphaproperties=alphaproperties_table)
+        latex_filename = "{0}/{1}.tex".format(folder_path, filename)
+
+        # Write the latex to a file then run pdflatex on it
+        # TODO: Handle calling pdflatex and its errors better.
+        try:
+            latex_file = open(latex_filename, 'w')
+            latex_file.write(output)
+            latex_file.close()
+            with open(os.devnull, 'wb') as devnull:
+                subprocess.call(['/usr/texbin/pdflatex', '-output-directory',
+                    folder_path, latex_filename],
+                    stdout=devnull, stderr=subprocess.STDOUT)
+        except:
+            pass
 
     def matching_number(self):
         # TODO: This needs to be updated when Sage 5.3 is released.
@@ -454,6 +552,10 @@ class INPGraph(Graph):
 
         return result
 
+    ###########################################################################
+    # Alpha properties
+    ###########################################################################
+
     def has_max_degree_order_minus_one(self):
         # TODO: Write tests
         return self.max_degree() == self.order() - 1
@@ -514,6 +616,10 @@ class INPGraph(Graph):
         # TODO: Write this function
         pass
     is_foldable._is_alpha_property = True
+
+    ###########################################################################
+    # Lower bounds
+    ###########################################################################
 
     def matching_lower_bound(self):
         # TODO: Write better tests
@@ -594,6 +700,10 @@ class INPGraph(Graph):
         term = 2 * e + n + 1
         return (1/2) * (term - sqrt(term^2 - 4*n^2))
     harant._is_lower_bound = True
+
+    ###########################################################################
+    # Upper bounds
+    ###########################################################################
 
     def matching_upper_bound(self):
         # TODO: Write better tests
@@ -830,9 +940,7 @@ class INPGraph(Graph):
         n = self.order()
 
         a = 1
-        # TODO: I'm not sure the a <= n condition is needed but sage hangs while
-        # running tests if it's not there.
-        while a <= n and sum(seq[:a]) <= sum(seq[a:]):
+        while sum(seq[:a]) <= sum(seq[a:]):
             a += 1
 
         return a
