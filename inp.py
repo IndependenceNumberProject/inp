@@ -22,41 +22,137 @@ import cvxopt.base
 import cvxopt.solvers
 #import datetime
 #from string import Template
-#import subprocess
-#import sys
-#import time
+import re
+import subprocess
+import sys
+import time
 
 # TODO: Include more functions from survey
 
-import sage.all
-from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, MixedIntegerLinearProgram
+from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
+                     MixedIntegerLinearProgram
+from sage.misc.package import is_package_installed
 
 try:
-    from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
-                            FileTransferSpeed, FormatLabel, Percentage, \
-                            ProgressBar, ReverseBar, RotatingMarker, \
-                            SimpleProgress, Timer
-    has_progressbar = True
+    from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
+    _has_progressbar = True
 except ImportError:
-    has_progressbar = False
+    _has_progressbar = False
 
 class INPGraph(Graph):
-    __lower_bounds = []
-    __upper_bounds = []
-    __alpha_properties = []
+    _nauty_count_pattern = re.compile(r'>Z (\d+) graphs generated')
 
     def __init__(self, *args, **kwargs):
         Graph.__init__(self, *args, **kwargs)
 
     @classmethod
+    def count_viable_graphs(cls, order):
+        # TODO: Write documentation
+        # TODO: Write tests
+        if not is_package_installed("nauty"): 
+            raise TypeError, "The nauty package is not required to find difficult graphs."
+
+        # Graphs with < 6 vertices will have pendant or foldable vertices.
+        if order < 6:
+            return 0
+
+        output = subprocess.check_output(["{0}/local/bin/nauty-geng".format(SAGE_ROOT),
+                                 "-cud3D{0}".format(order-2), str(order)], stderr=subprocess.STDOUT)
+        m = cls._nauty_count_pattern.search(output)
+        return int(m.group(1))
+
+    @classmethod
+    def _next_difficult_graph_of_order(cls, order, verbose=True):
+        if not is_package_installed("nauty"): 
+            raise TypeError, "The nauty package is not required to find difficult graphs."
+
+        # Graphs with < 6 vertices will have pendant or foldable vertices.
+        if order < 6:
+            raise ValueError, "There are no difficult graphs with less than 6 vertices."
+
+        if not _has_progressbar:
+            verbose = False
+
+        if verbose:
+            sys.stdout.write("Counting graphs of order {0}... ".format(order))
+            sys.stdout.flush()
+            num_graphs_to_check = cls.count_viable_graphs(order)
+            print num_graphs_to_check
+            pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+
+        gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
+        counter = 0
+
+        while True:
+            try:
+                g = INPGraph(gen.next())
+
+                if g.is_difficult():
+                    if verbose:
+                        pbar.finish()
+                        print "Found a difficult graph: {0}".format(g.graph6_string())
+                    return g
+
+                counter += 1
+
+                if verbose:
+                    pbar.update(counter)
+                    sys.stdout.flush()
+
+            except StopIteration:
+                if verbose:
+                    pbar.finish()
+
+                return None
+        
+    @classmethod
     def next_difficult_graph(cls, order=None, verbose=True, write_to_pdf=False):
         # TODO: Is it possible to write good tests for this?
         # TODO: Write this function including a progress bar
-        pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=300).start()
-        for i in range(300):
-            #time.sleep(0.01)
-            pbar.update(i+1)
-        pbar.finish()
+        # pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=300).start()
+        # for i in range(300):
+        #     #time.sleep(0.01)
+        #     pbar.update(i+1)
+        # pbar.finish()
+        r"""
+        This function returns the smallest graph considered difficult by INP theory.
+
+        INPUT:
+
+        - ``verbose`` - boolean -- Print progress to the console and save graph
+            information as a dossier PDF and a PNG image.
+
+        NOTES:
+
+        The return value of this function may change depending on the functions
+        included in the __lower_bounds, __upper_bounds, and __alpha_properties
+        settings.
+        """
+        if not is_package_installed("nauty"): 
+            raise TypeError, "The nauty package is not required to find difficult graphs."
+
+        # Graphs with < 6 vertices will have pendant or foldable vertices.
+
+        if order is None:
+            n = 6
+        else:
+            if order < 6:
+                raise ValueError, "There are no difficult graphs with less than 6 vertices."
+
+            n = order
+
+        while True:
+            try:
+                g = cls._next_difficult_graph_of_order(n, verbose)
+                if g is None:
+                    n += 1
+                else:
+                    return g
+            except KeyboardInterrupt:
+                if verbose:
+                    sys.stdout.flush()
+                    print "\nStopped."
+                return None
 
     def is_difficult(self):
         # TODO: Is it possible to write good tests for this?
@@ -95,9 +191,9 @@ class INPGraph(Graph):
         # The default bound is 1
         lbound = 1
 
-        for func in self.__lower_bounds:
+        for func in self._lower_bounds:
             try:
-                new_bound = self.func()
+                new_bound = func(self)
                 if new_bound > lbound:
                     lbound = new_bound
             except ValueError:
@@ -119,9 +215,9 @@ class INPGraph(Graph):
         # The default upper bound is the number of vertices
         ubound = self.order()
 
-        for func in self.__upper_bounds:
+        for func in self._upper_bounds:
             try:
-                new_bound = self.func()
+                new_bound = func(self)
                 if new_bound < ubound:
                     ubound = new_bound
             except ValueError:
@@ -140,9 +236,9 @@ class INPGraph(Graph):
         The return value of this function may change depending on the functions
         included in the __alpha_properties setting.
         """
-        for func in self.__alpha_properties:
+        for func in self._alpha_properties:
             try:
-                if self.func():
+                if func(self):
                     return True
             except ValueError:
                 pass
@@ -731,3 +827,7 @@ class INPGraph(Graph):
         C = Integer(len(self.blocks_and_cut_vertices()[1]))
         return n - C/2 - Integer(1)/2
     cut_vertices_bound.__is_upper_bound = True
+
+    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
+    _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
+    _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
