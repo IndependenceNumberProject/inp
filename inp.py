@@ -28,6 +28,8 @@ import sys
 import time
 
 # TODO: Include more functions from survey
+# TODO: Write surveying functions to test one function against a given order
+# TODO: Get PDF exporting working again
 
 from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
                      MixedIntegerLinearProgram
@@ -46,11 +48,59 @@ class INPGraph(Graph):
         Graph.__init__(self, *args, **kwargs)
 
     @classmethod
+    def survey(cls, func, order):
+        # TODO: Write documentation
+        # TODO: Is it possible to write tests for this?
+        if not is_package_installed("nauty"):
+            raise TypeError, "The nauty package is required to survey a bound or property."
+
+        sys.stdout.write("Counting graphs of order {0}... ".format(order))
+        sys.stdout.flush()
+        num_graphs_to_check = cls.count_viable_graphs(order)
+        print num_graphs_to_check
+        pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+
+        gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
+        counter = 0
+        hits = 0
+
+        is_alpha_property = hasattr(func, '_is_alpha_property') and func._is_alpha_property
+        is_bound = (hasattr(func, '_is_lower_bound') and func._is_lower_bound) or \
+                   (hasattr(func, '_is_upper_bound') and func._is_upper_bound)
+
+        while True:
+            try:
+                g = INPGraph(gen.next())
+
+                if is_alpha_property:
+                    if func(g):
+                        hits += 1
+                elif is_bound:
+                    if func(g) == g.independence_number():
+                        hits += 1
+
+                counter += 1
+                pbar.update(counter)
+                sys.stdout.flush()
+
+            except StopIteration:
+                pbar.finish()
+                if is_alpha_property:
+                    print "{0} out of {1} graphs of order {2} satisfied {3}.".format(hits, counter, order, func.__name__)
+                elif is_bound:
+                    print "{0} out of {1} graphs of order {2} were predicted by {3}.".format(hits, counter, order, func.__name__)
+                return
+
+            except KeyboardInterrupt:
+                print "\nStopped."
+                return
+
+    @classmethod
     def count_viable_graphs(cls, order):
         # TODO: Write documentation
         # TODO: Write tests
         if not is_package_installed("nauty"): 
-            raise TypeError, "The nauty package is not required to find difficult graphs."
+            raise TypeError, "The nauty package is required to count viable graphs."
 
         # Graphs with < 6 vertices will have pendant or foldable vertices.
         if order < 6:
@@ -64,7 +114,7 @@ class INPGraph(Graph):
     @classmethod
     def _next_difficult_graph_of_order(cls, order, verbose=True):
         if not is_package_installed("nauty"): 
-            raise TypeError, "The nauty package is not required to find difficult graphs."
+            raise TypeError, "The nauty package is required to find difficult graphs."
 
         # Graphs with < 6 vertices will have pendant or foldable vertices.
         if order < 6:
@@ -125,7 +175,7 @@ class INPGraph(Graph):
         NOTES:
 
         The return value of this function may change depending on the functions
-        included in the __lower_bounds, __upper_bounds, and __alpha_properties
+        included in the _lower_bounds, _upper_bounds, and _alpha_properties
         settings.
         """
         if not is_package_installed("nauty"): 
@@ -163,7 +213,7 @@ class INPGraph(Graph):
         NOTES:
 
         The return value of this function may change depending on the functions
-        included in the __lower_bounds, __upper_bounds, and __alpha_properties
+        included in the _lower_bounds, _upper_bounds, and _alpha_properties
         settings.
         """
         if self.has_alpha_property():
@@ -186,7 +236,7 @@ class INPGraph(Graph):
         NOTES:
 
         The return value of this function may change depending on the functions
-        included in the __lower_bounds setting.
+        included in the _lower_bounds setting.
         """
         # The default bound is 1
         lbound = 1
@@ -210,7 +260,7 @@ class INPGraph(Graph):
         NOTES:
 
         The return value of this function may change depending on the functions
-        included in the __upper_bounds setting.
+        included in the _upper_bounds setting.
         """
         # The default upper bound is the number of vertices
         ubound = self.order()
@@ -234,7 +284,7 @@ class INPGraph(Graph):
         NOTES:
 
         The return value of this function may change depending on the functions
-        included in the __alpha_properties setting.
+        included in the _alpha_properties setting.
         """
         for func in self._alpha_properties:
             try:
@@ -407,7 +457,7 @@ class INPGraph(Graph):
     def has_max_degree_order_minus_one(self):
         # TODO: Write tests
         return self.max_degree() == self.order() - 1
-    has_max_degree_order_minus_one.__is_alpha_property = True
+    has_max_degree_order_minus_one._is_alpha_property = True
 
     def is_claw_free(self):
         # TODO: Write tests
@@ -416,11 +466,11 @@ class INPGraph(Graph):
             if self.subgraph(subset).degree_sequence() == [3,1,1,1]:
                 return False
         return True
-    is_claw_free.__is_alpha_property = True
+    is_claw_free._is_alpha_property = True
 
     def has_pendant_vertex(self):
         return 1 in self.degree()
-    has_pendant_vertex.__is_alpha_property = True
+    has_pendant_vertex._is_alpha_property = True
 
     def has_simplicial_vertex(self):
         # TODO: Write tests
@@ -429,7 +479,7 @@ class INPGraph(Graph):
                 return True
 
         return False
-    has_simplicial_vertex.__is_alpha_property = True
+    has_simplicial_vertex._is_alpha_property = True
 
     def is_KE(self):
         # TODO: Write tests
@@ -439,7 +489,7 @@ class INPGraph(Graph):
             nc.extend(self.neighbors(v))
 
         return list(set(c + nc)) == self.vertices()
-    is_KE.__is_alpha_property = True
+    is_KE._is_alpha_property = True
 
     def is_almost_KE(self):
         # TODO: Write tests
@@ -449,7 +499,7 @@ class INPGraph(Graph):
                 return True
 
         return False
-    is_almost_KE.__is_alpha_property = True
+    is_almost_KE._is_alpha_property = True
 
     def has_nonempty_KE_part(self):
         # TODO: Write tests
@@ -457,13 +507,13 @@ class INPGraph(Graph):
             return True
         else:
             return False
-    has_nonempty_KE_part.__is_alpha_property = True
+    has_nonempty_KE_part._is_alpha_property = True
 
     def is_foldable(self):
         # TODO: Write tests
         # TODO: Write this function
         pass
-    is_foldable.__is_alpha_property = True
+    is_foldable._is_alpha_property = True
 
     def matching_lower_bound(self):
         # TODO: Write better tests
@@ -480,7 +530,7 @@ class INPGraph(Graph):
 
         """
         return self.order() - 2 * self.matching_number()
-    matching_lower_bound.__is_lower_bound = True
+    matching_lower_bound._is_lower_bound = True
 
     def residue(self):
         # TODO: Write tests
@@ -492,14 +542,14 @@ class INPGraph(Graph):
             seq.sort(reverse=True)
 
         return len(seq)
-    residue.__is_lower_bound = True
+    residue._is_lower_bound = True
 
     def average_degree_bound(self):
         # TODO: Write tests
         n = Integer(self.order())
         d = Rational(self.average_degree())
         return n / (1 + d)
-    average_degree_bound.__is_lower_bound = True
+    average_degree_bound._is_lower_bound = True
 
     def caro_wei(self):
         # TODO: Write better tests
@@ -521,21 +571,21 @@ class INPGraph(Graph):
 
         """
         return sum([1/(1+Integer(d)) for d in self.degree()])
-    caro_wei.__is_lower_bound = True
+    caro_wei._is_lower_bound = True
 
     def wilf(self):
         # TODO: Write tests
         n = Integer(self.order())
         max_eigenvalue = max(self.adjacency_matrix().eigenvalues())
         return n / (1 + max_eigenvalue)
-    wilf.__is_lower_bound = True
+    wilf._is_lower_bound = True
 
     def hansen_zheng_lower_bound(self):
         # TODO: Write tests
         n = Integer(self.order())
         e = Integer(self.size())
         return ceil(n - (2 * e)/(1 + floor(2 * e / n)))
-    hansen_zheng_lower_bound.__is_lower_bound = True
+    hansen_zheng_lower_bound._is_lower_bound = True
 
     def harant(self):
         # TODO: Write tests
@@ -543,7 +593,7 @@ class INPGraph(Graph):
         e = Integer(self.size())
         term = 2 * e + n + 1
         return (1/2) * (term - sqrt(term^2 - 4*n^2))
-    harant.__is_lower_bound = True
+    harant._is_lower_bound = True
 
     def matching_upper_bound(self):
         # TODO: Write better tests
@@ -560,7 +610,7 @@ class INPGraph(Graph):
 
         """
         return self.order() - self.matching_number()
-    matching_upper_bound.__is_upper_bound = True
+    matching_upper_bound._is_upper_bound = True
 
     def fractional_alpha(self):
         # TODO: Write better tests
@@ -593,7 +643,7 @@ class INPGraph(Graph):
             p.add_constraint(x[u] + x[v], max=1)
 
         return p.solve()
-    fractional_alpha.__is_upper_bound = True
+    fractional_alpha._is_upper_bound = True
 
     def lovasz_theta(self):
         # TODO: Write better tests
@@ -651,7 +701,7 @@ class INPGraph(Graph):
         v = 1.0 + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
         return round(v[0], 3)
-    lovasz_theta.__is_upper_bound = True
+    lovasz_theta._is_upper_bound = True
 
     def kwok(self):
         # TODO: Write better tests
@@ -682,7 +732,7 @@ class INPGraph(Graph):
             raise ValueError("Kwok bound is not defined for graphs with maximum degree 0.")
 
         return n - e / Delta
-    kwok.__is_upper_bound = True
+    kwok._is_upper_bound = True
 
     def hansen_zheng_upper_bound(self):
         # TODO: Write better tests
@@ -702,7 +752,7 @@ class INPGraph(Graph):
         n = Integer(self.order())
         e = Integer(self.size())
         return floor(.5 + sqrt(.25 + n**2 - n - 2*e))
-    hansen_zheng_upper_bound.__is_upper_bound = True
+    hansen_zheng_upper_bound._is_upper_bound = True
 
     def min_degree_bound(self):
         r"""
@@ -725,7 +775,7 @@ class INPGraph(Graph):
 
         """
         return self.order() - self.min_degree()
-    min_degree_bound.__is_upper_bound = True
+    min_degree_bound._is_upper_bound = True
 
     def cvetkovic(self):
         # TODO: Write better tests
@@ -754,7 +804,7 @@ class INPGraph(Graph):
                 zero += 1
 
         return zero + min([positive, negative])
-    cvetkovic.__is_upper_bound = True
+    cvetkovic._is_upper_bound = True
 
     def annihilation_number(self):
         # TODO: Write better tests
@@ -786,7 +836,7 @@ class INPGraph(Graph):
             a += 1
 
         return a
-    annihilation_number.__is_upper_bound = True
+    annihilation_number._is_upper_bound = True
 
     def borg(self):
         # TODO: Write better tests
@@ -809,7 +859,7 @@ class INPGraph(Graph):
             raise ValueError("Borg bound is not defined for graphs with maximum degree 0.")
 
         return n - ceil((n-1) / Delta)
-    borg.__is_upper_bound = True
+    borg._is_upper_bound = True
 
     def cut_vertices_bound(self):
         r"""
@@ -826,7 +876,7 @@ class INPGraph(Graph):
         n = Integer(self.order())
         C = Integer(len(self.blocks_and_cut_vertices()[1]))
         return n - C/2 - Integer(1)/2
-    cut_vertices_bound.__is_upper_bound = True
+    cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
