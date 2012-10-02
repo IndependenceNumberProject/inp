@@ -59,7 +59,9 @@ class INPGraph(Graph):
         sys.stdout.flush()
         num_graphs_to_check = cls.count_viable_graphs(order)
         print num_graphs_to_check
-        pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+
+        if _has_progressbar:
+            pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
 
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
@@ -81,11 +83,15 @@ class INPGraph(Graph):
                         hits += 1
 
                 counter += 1
-                pbar.update(counter)
-                sys.stdout.flush()
+
+                if _has_progressbar:
+                    pbar.update(counter)
+                    sys.stdout.flush()
 
             except StopIteration:
-                pbar.finish()
+                if _has_progressbar:
+                    pbar.finish()
+
                 if is_alpha_property:
                     print "{0} out of {1} graphs of order {2} satisfied {3}.".format(hits, counter, order, func.__name__)
                 elif is_bound:
@@ -121,15 +127,14 @@ class INPGraph(Graph):
         if order < 6:
             raise ValueError, "There are no difficult graphs with less than 6 vertices."
 
-        if not _has_progressbar:
-            verbose = False
-
         if verbose:
             sys.stdout.write("Counting graphs of order {0}... ".format(order))
             sys.stdout.flush()
             num_graphs_to_check = cls.count_viable_graphs(order)
             print num_graphs_to_check
-            pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+
+            if _has_progressbar:
+                pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
 
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
@@ -140,19 +145,20 @@ class INPGraph(Graph):
 
                 if g.is_difficult():
                     if verbose:
-                        pbar.finish()
+                        if _has_progressbar:
+                            pbar.finish()
                         print "Found a difficult graph: {0}".format(g.graph6_string())
                         g.save_files()
                     return g
 
                 counter += 1
 
-                if verbose:
+                if verbose and _has_progressbar:
                     pbar.update(counter)
                     sys.stdout.flush()
 
             except StopIteration:
-                if verbose:
+                if verbose and _has_progressbar:
                     pbar.finish()
 
                 return None
