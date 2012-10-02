@@ -29,7 +29,6 @@ import sys
 import time
 
 # TODO: Include more functions from survey
-# TODO: Get PDF exporting working again
 
 from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
                      MixedIntegerLinearProgram
@@ -170,7 +169,6 @@ class INPGraph(Graph):
     @classmethod
     def next_difficult_graph(cls, order=None, verbose=True, write_to_pdf=False):
         # TODO: Is it possible to write good tests for this?
-        # TODO: Write this function including a progress bar
         # pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=300).start()
         # for i in range(300):
         #     #time.sleep(0.01)
