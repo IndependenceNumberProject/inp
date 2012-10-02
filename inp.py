@@ -978,6 +978,7 @@ class INPGraph(Graph):
     borg._is_upper_bound = True
 
     def cut_vertices_bound(self):
+        # TODO: Write better tests
         r"""
 
         EXAMPLES:
