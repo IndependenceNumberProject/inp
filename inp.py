@@ -35,15 +35,15 @@ from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
                      MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
 
+try:
+    from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
+    _INPGraph__has_progressbar = True
+except ImportError:
+    _INPGraph__has_progressbar = False
+
 class INPGraph(Graph):
     _nauty_count_pattern = re.compile(r'>Z (\d+) graphs generated')
     _save_path = os.path.expanduser("~/Dropbox/INP/")
-
-    try:
-        from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
-        _has_progressbar = True
-    except ImportError:
-        _has_progressbar = False
 
     def __init__(self, *args, **kwargs):
         Graph.__init__(self, *args, **kwargs)
@@ -60,8 +60,10 @@ class INPGraph(Graph):
         num_graphs_to_check = cls.count_viable_graphs(order)
         print num_graphs_to_check
 
-        if _has_progressbar:
+        if __has_progressbar:
             pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+        else:
+            print "Testing..."
 
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
@@ -84,12 +86,12 @@ class INPGraph(Graph):
 
                 counter += 1
 
-                if _has_progressbar:
+                if __has_progressbar:
                     pbar.update(counter)
                     sys.stdout.flush()
 
             except StopIteration:
-                if _has_progressbar:
+                if __has_progressbar:
                     pbar.finish()
 
                 if is_alpha_property:
@@ -133,8 +135,10 @@ class INPGraph(Graph):
             num_graphs_to_check = cls.count_viable_graphs(order)
             print num_graphs_to_check
 
-            if _has_progressbar:
+            if __has_progressbar:
                 pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+            else:
+                print "Testing..."
 
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
@@ -145,7 +149,7 @@ class INPGraph(Graph):
 
                 if g.is_difficult():
                     if verbose:
-                        if _has_progressbar:
+                        if __has_progressbar:
                             pbar.finish()
                         print "Found a difficult graph: {0}".format(g.graph6_string())
                         g.save_files()
@@ -153,12 +157,12 @@ class INPGraph(Graph):
 
                 counter += 1
 
-                if verbose and _has_progressbar:
+                if verbose and __has_progressbar:
                     pbar.update(counter)
                     sys.stdout.flush()
 
             except StopIteration:
-                if verbose and _has_progressbar:
+                if verbose and __has_progressbar:
                     pbar.finish()
 
                 return None
