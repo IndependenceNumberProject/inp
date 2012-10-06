@@ -332,6 +332,7 @@ class INPGraph(Graph):
         r"""
         Generate the latex for the information box.
         """
+        # TODO: Resolve Sage warnings about tikz.sty
         info_table = """
         \\rowcolor{{LightGray}} $n$ & {0} \\\\
         \\rowcolor{{LightGray}} $e$ & {1} \\\\
@@ -342,7 +343,7 @@ class INPGraph(Graph):
         lowerbounds_table = ''
         for func in self._lower_bounds:
             name = func.__name__
-            value = func(g)
+            value = func(self)
 
             try:
                 if value in ZZ:
@@ -360,7 +361,7 @@ class INPGraph(Graph):
         upperbounds_table = ''
         for func in self._upper_bounds:
             name = func.__name__
-            value = func(g)
+            value = func(self)
 
             try:
                 if value in ZZ:
