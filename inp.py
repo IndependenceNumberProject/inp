@@ -874,6 +874,7 @@ class INPGraph(Graph):
     hansen_zheng_upper_bound._is_upper_bound = True
 
     def min_degree_bound(self):
+        # TODO: Write better tests
         r"""
         Compute the upper bound `\alpha \leq n - \delta`. This bound probably
         belong to "folklore."
