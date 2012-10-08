@@ -572,14 +572,11 @@ class INPGraph(Graph):
 
     def is_claw_free(self):
         # TODO: Write tests
-        subsets = combinations_iterator(self.vertices(), 4)
-        for subset in subsets:
-            if self.subgraph(subset).degree_sequence() == [3,1,1,1]:
-                return False
-        return True
+        return self.subgraph_search_count(graphs.ClawGraph()) == 0
     is_claw_free._is_alpha_property = True
 
     def has_pendant_vertex(self):
+        # TODO: Write tests
         return 1 in self.degree()
     has_pendant_vertex._is_alpha_property = True
 
