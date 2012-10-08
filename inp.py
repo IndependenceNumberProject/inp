@@ -470,6 +470,7 @@ class INPGraph(Graph):
     alpha = independence_number
 
     def bipartite_double_cover(self):
+        # TODO: Simplify these tests into a loop
         r"""
         Return a bipartite double cover of the graph, also known as the
         bidouble.
@@ -527,6 +528,10 @@ class INPGraph(Graph):
         else:
             return [verts] + self.neighbors(verts)
 
+    def closed_neighborhood_subgraph(self, verts):
+        # TODO: Write tests
+        return self.subgraph(self.closed_neighborhood(verts))
+
     def open_neighborhood(self, verts):
         # TODO: Write tests
         if isinstance(verts, list):
@@ -536,6 +541,10 @@ class INPGraph(Graph):
             return list(set(neighborhood))
         else:
             return self.neighbors(verts)
+
+    def open_neighborhood_subgraph(self, verts):
+        # TODO: Write tests
+        return self.subgraph(self.open_neighborhood(verts))
 
     def max_degree(self):
         # TODO: Write tests
@@ -577,6 +586,50 @@ class INPGraph(Graph):
 
         return result
 
+    def has_foldable_vertex(self):
+        # TODO: Write tests
+        # TODO: Is it better to write this using any()?
+        for v in self.vertices():
+            # true if N(v) contains no anti-triangles
+            if self.open_neighborhood_subgraph(v).complement().is_triangle_free():
+                return True
+        return False
+
+    def has_foldable_vertex_at(self, v):
+        # TODO: Write tests
+        return self.open_neighborhood_subgraph(v).complement().is_triangle_free()
+
+    def fold_at(self, v):
+        r"""
+        Return a copy of the graph folded at `v`, as folding is defined in
+        Fomin-Grandoni-Kratsch 2006.
+
+        EXAMPLES:
+
+        ::
+            sage: G = INPGraph('EqW_')
+            sage: G.fold_at(0).is_isomorphic(graphs.ClawGraph())
+            True
+
+        ::
+            sage: G = INPGraph('G{O`?_')
+            sage: G.fold_at(0).graph6_string()
+            'E?dw'
+        """
+        g = self.copy()
+        nv = self.closed_neighborhood_subgraph(v)
+        nv_c = nv.complement()
+        new_nodes = []
+
+        for (i,j) in nv_c.edge_iterator(labels=False):
+            g.add_vertex((i,j))
+            g.add_edges([[(i,j), w] for w in self.open_neighborhood([i, j])])
+            g.add_edges([[(i,j), w] for w in new_nodes])
+            new_nodes += [(i,j)]
+
+        g.delete_vertices(nv.vertices())
+        return g
+
     ###########################################################################
     # Alpha properties
     ###########################################################################
@@ -600,7 +653,7 @@ class INPGraph(Graph):
         # TODO: Write tests
         # TODO: Is it better to write this using any()?
         for v in self.vertices():
-            if self.subgraph(self.neighbors(v)).is_clique():
+            if self.open_neighborhood_subgraph(v).is_clique():
                 return True
 
         return False
@@ -635,15 +688,14 @@ class INPGraph(Graph):
             return False
     has_nonempty_KE_part._is_alpha_property = True
 
-    def has_foldable_vertex(self):
+    def is_fold_reducible(self):
         # TODO: Write tests
-        # TODO: Is it better to write this using any()?
+        n = self.order()
         for v in self.vertices():
-            # true if N(v) contains no anti-triangles
-            if self.subgraph(self.neighbors(v)).complement().is_triangle_free():
+            if self.fold_at(v).order() < n:
                 return True
         return False
-    has_foldable_vertex._is_alpha_property = True
+    is_fold_reducible._is_alpha_property = True
 
     ###########################################################################
     # Lower bounds
@@ -1016,6 +1068,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [has_foldable_vertex,is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
+    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part, is_fold_reducible]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
