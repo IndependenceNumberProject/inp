@@ -13,8 +13,13 @@ This module requires at least version 5.2 of Sage.
 To perform any of the graph searches, you'll need to install the `nauty` package
 into Sage:
 
-You may also install the `progressbar` module to display pretty progress bars
+`sage -i nauty`
+
+You may also install the `python-progressbar` module to display pretty progress bars
 while searching:
+
+1. Download [python-progressbar](http://code.google.com/p/python-progressbar/) and unpack it
+2. Install it into Sage's version of python: `sage -python setup.py install`
 
 Examples
 --------
@@ -39,6 +44,10 @@ Compute the Lovasz theta value for the graph:
 Test if a graph is difficult:
 
 `G.is_difficult()`
+
+Check a particular invariant against all graphs of a given order:
+
+`INPGraph.survey(INPGraph.residue, 8)`
 
 Search for a difficult graph:
 
