@@ -169,11 +169,6 @@ class INPGraph(Graph):
     @classmethod
     def next_difficult_graph(cls, order=None, verbose=True, write_to_pdf=False):
         # TODO: Is it possible to write good tests for this?
-        # pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=300).start()
-        # for i in range(300):
-        #     #time.sleep(0.01)
-        #     pbar.update(i+1)
-        # pbar.finish()
         r"""
         This function returns the smallest graph considered difficult by INP theory.
 
@@ -348,14 +343,14 @@ class INPGraph(Graph):
             try:
                 if value in ZZ:
                     lowerbounds_table += \
-                        "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(value))
                 else:
                     lowerbounds_table += \
-                       "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+                       "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
             except (AttributeError, ValueError):
                 print "Can't format", name, value, "for LaTeX output."
                 lowerbounds_table += \
-                    "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
+                    "{0} & {1} \\\\\n".format(self._latex_escape(name), '?')
 
         # Generate the latex for the upper bounds table
         upperbounds_table = ''
@@ -366,21 +361,21 @@ class INPGraph(Graph):
             try:
                 if value in ZZ:
                     upperbounds_table += \
-                        "{0} & {1} \\\\\n".format(name, int(value)).replace('_', r'\_')
+                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(value))
                 else:
                     upperbounds_table += \
-                        "{0} & {1:.3f} \\\\\n".format(name, float(value)).replace('_', r'\_')
+                        "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
             except (AttributeError, ValueError):
                 print "Can't format", name, value, "for LaTeX output."
                 upperbounds_table += \
-                    "{0} & {1} \\\\\n".format(name, '?').replace('_', r'\_')
+                    "{0} & {1} \\\\\n".format(self._latex_escape(name), '?')
 
         # Generate the latex for the alpha properties table
         alphaproperties_table = ''
         for func in self._alpha_properties:
             name = func.__name__
             alphaproperties_table += \
-                "{0} \\\\\n".format(name).replace('_', r'\_').replace('~', r'{\textasciitilde}')
+                "{0} \\\\\n".format(self._latex_escape(name))
 
         # Insert all the generated latex into the template file
         template_file = open('dossier_template.tex', 'r')
@@ -388,7 +383,7 @@ class INPGraph(Graph):
         s = Template(template)
 
         output = s.substitute(graph=latex(self), 
-                              name=self.graph6_string().replace('_', '\_'),
+                              name=self._latex_escape(self.graph6_string()),
                               info=info_table,
                               lowerbounds=lowerbounds_table, 
                               upperbounds=upperbounds_table,
@@ -407,6 +402,27 @@ class INPGraph(Graph):
                     stdout=devnull, stderr=subprocess.STDOUT)
         except:
             pass
+
+    @classmethod
+    def _latex_escape(cls, str):
+        # TODO: Write documentation
+        str = str.replace('\\', r'\textbackslash ')
+
+        escape_chars = {
+            '#': r'\#',
+            '$': r'\$',
+            '%': r'\%',
+            '&': r'\&',
+            '_': r'\_',
+            '{': r'\{',
+            '}': r'\}',
+            '^': r'\textasciicircum ',
+            '~': r'\textasciitilde '
+        }
+
+        for old, new in escape_chars.iteritems():
+            str = str.replace(old, new)
+        return str
 
     def matching_number(self):
         # TODO: This needs to be updated when Sage 5.3 is released.
@@ -1000,6 +1016,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [has_foldable_vertex, is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
+    _alpha_properties = [has_foldable_vertex,is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
