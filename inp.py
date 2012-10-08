@@ -582,6 +582,7 @@ class INPGraph(Graph):
 
     def has_simplicial_vertex(self):
         # TODO: Write tests
+        # TODO: Is it better to write this using any()?
         for v in self.vertices():
             if self.subgraph(self.neighbors(v)).is_clique():
                 return True
@@ -601,6 +602,7 @@ class INPGraph(Graph):
 
     def is_almost_KE(self):
         # TODO: Write tests
+        # TODO: Is it better to write this using any()?
         subsets = combinations_iterator(self.vertices(), self.order() - 1)
         for subset in subsets:
             if self.subgraph(subset).is_KE():
@@ -617,11 +619,15 @@ class INPGraph(Graph):
             return False
     has_nonempty_KE_part._is_alpha_property = True
 
-    def is_foldable(self):
+    def has_foldable_vertex(self):
         # TODO: Write tests
-        # TODO: Write this function
-        pass
-    is_foldable._is_alpha_property = True
+        # TODO: Is it better to write this using any()?
+        for v in self.vertices():
+            # true if N(v) contains no anti-triangles
+            if self.subgraph(self.neighbors(v)).complement().is_triangle_free():
+                return True
+        return False
+    has_foldable_vertex._is_alpha_property = True
 
     ###########################################################################
     # Lower bounds
@@ -994,6 +1000,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
+    _alpha_properties = [has_foldable_vertex, is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
