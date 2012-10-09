@@ -15,11 +15,15 @@ into Sage:
 
 `sage -i nauty`
 
-You may also install the `python-progressbar` module to display pretty progress bars
-while searching:
+You may also install the `python-progressbar` module to display pretty progress bars while searching:
 
 1. Download [python-progressbar](http://code.google.com/p/python-progressbar/) and unpack it
 2. Install it into Sage's version of python: `sage -python setup.py install`
+
+When getting the LaTeX of a graph, Sage assumes you have your `texbin` folder in your path, which is not standard on Macs. Assuming you have installed TeXShop on a Mac, you may add this to your `~/.bash_profile`:
+
+`PATH="/usr/texbin:$PATH"`
+`export PATH`
 
 Examples
 --------
