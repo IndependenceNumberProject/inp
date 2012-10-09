@@ -601,7 +601,8 @@ class INPGraph(Graph):
         # TODO: Is it better to write this using any()?
         for v in self.vertices():
             # true if N(v) contains no anti-triangles
-            if self.open_neighborhood_subgraph(v).complement().is_triangle_free():
+            #if self.open_neighborhood_subgraph(v).complement().is_triangle_free():
+            if self.has_foldable_vertex_at(v):
                 return True
         return False
 
@@ -702,8 +703,9 @@ class INPGraph(Graph):
         # TODO: Write tests
         n = self.order()
         for v in self.vertices():
-            if self.fold_at(v).order() < n:
-                return True
+            if self.has_foldable_vertex_at(v):
+                if self.fold_at(v).order() < n:
+                    return True
         return False
     is_fold_reducible._is_alpha_property = True
 
@@ -1079,6 +1081,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
+    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part, is_fold_reducible]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
