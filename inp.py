@@ -301,9 +301,11 @@ class INPGraph(Graph):
         return False
 
     def save_files(self):
+        # TODO: Write documentation
+        # TODO: Is it possible to write good tests for this?
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         filename = "difficult_graph_{0}".format(timestamp)
-        folder_path = "{0}/{1}".format(self._save_path, filename)
+        folder_path = "{0}{1}".format(self._save_path, filename)
 
         try:
             if not os.path.exists(folder_path):
@@ -311,23 +313,30 @@ class INPGraph(Graph):
         except IOError:
             "Can't make directory {0}".format(folder_path)
 
+        (saved_plot, saved_pdf) = (False, False)
+
         try:
             self.plot().save("{0}/{1}.png".format(folder_path, filename))
-            print "Plot saved."
+            #print "Plot saved to {0}{1}.png".format(folder_path, filename)
+            saved_plot = True
         except IOError:
-            print "Couldn't save {0}.png".format(filename)
+            print "Couldn't save {0}{1}.png".format(folder_path, filename)
 
         try:
             self._export_pdf(folder_path, filename)
-            print "Dossier saved."
+            #print "Dossier saved to {0}{1}.pdf".format(folder_path, filename)
+            saved_pdf = True
         except IOError:
-            print "Couldn't save {0}.pdf".format(filename)
+            print "Couldn't save {0}{1}.pdf".format(folder_path, filename)
+
+        if saved_plot or saved_pdf:
+            print "Saved graph information to: \n  {0}".format(folder_path)
 
     def _export_pdf(self, folder_path, filename):
+        # TODO: Is it possible to write good tests for this?
         r"""
         Generate the latex for the information box.
         """
-        # TODO: Resolve Sage warnings about tikz.sty
         info_table = """
         \\rowcolor{{LightGray}} $n$ & {0} \\\\
         \\rowcolor{{LightGray}} $e$ & {1} \\\\
@@ -406,6 +415,7 @@ class INPGraph(Graph):
     @classmethod
     def _latex_escape(cls, str):
         # TODO: Write documentation
+        # TODO: Write tests
         str = str.replace('\\', r'\textbackslash ')
 
         escape_chars = {
@@ -890,6 +900,7 @@ class INPGraph(Graph):
         sol = cvxopt.solvers.sdp(c, Gs=[-X], hs=[-cvxopt.base.matrix([0.0]*(n*n-1) + [-1.0], (n,n))])
         v = 1.0 + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
+        # TODO: Rounding here is a total hack
         return round(v[0], 3)
     lovasz_theta._is_upper_bound = True
 
@@ -1068,6 +1079,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part, is_fold_reducible]
+    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part]
     _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
