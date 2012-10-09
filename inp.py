@@ -120,7 +120,7 @@ class INPGraph(Graph):
         return int(m.group(1))
 
     @classmethod
-    def _next_difficult_graph_of_order(cls, order, verbose=True):
+    def _next_difficult_graph_of_order(cls, order, verbose=True, save=False):
         if not is_package_installed("nauty"): 
             raise TypeError, "The nauty package is required to find difficult graphs."
 
@@ -151,7 +151,9 @@ class INPGraph(Graph):
                         if __has_progressbar:
                             pbar.finish()
                         print "Found a difficult graph: {0}".format(g.graph6_string())
-                        g.save_files()
+
+                        if save:
+                            g.save_files()
                     return g
 
                 counter += 1
@@ -167,7 +169,7 @@ class INPGraph(Graph):
                 return None
         
     @classmethod
-    def next_difficult_graph(cls, order=None, verbose=True, write_to_pdf=False):
+    def next_difficult_graph(cls, order=None, verbose=True, save=False):
         # TODO: Is it possible to write good tests for this?
         r"""
         This function returns the smallest graph considered difficult by INP theory.
@@ -628,17 +630,17 @@ class INPGraph(Graph):
             'E?dw'
         """
         g = self.copy()
-        nv = self.closed_neighborhood_subgraph(v)
-        nv_c = nv.complement()
+        Nv = self.closed_neighborhood_subgraph(v)
+        Nv_c = Nv.complement()
         new_nodes = []
 
-        for (i,j) in nv_c.edge_iterator(labels=False):
+        for (i,j) in Nv_c.edge_iterator(labels=False):
             g.add_vertex((i,j))
             g.add_edges([[(i,j), w] for w in self.open_neighborhood([i, j])])
             g.add_edges([[(i,j), w] for w in new_nodes])
             new_nodes += [(i,j)]
 
-        g.delete_vertices(nv.vertices())
+        g.delete_vertices(Nv.vertices())
         return g
 
     ###########################################################################
@@ -701,10 +703,16 @@ class INPGraph(Graph):
 
     def is_fold_reducible(self):
         # TODO: Write tests
-        n = self.order()
+        if not self.has_foldable_vertex():
+            return False
+
         for v in self.vertices():
             if self.has_foldable_vertex_at(v):
-                if self.fold_at(v).order() < n:
+                #if self.fold_at(v).order() < n:
+                # We should be able to estimate this without actually folding
+                Nv = self.closed_neighborhood_subgraph(v)
+                Nv_c = Nv.complement()
+                if Nv_c.size() - Nv.order() < 0:
                     return True
         return False
     is_fold_reducible._is_alpha_property = True
