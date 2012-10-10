@@ -1,0 +1,38 @@
+\documentclass[10pt]{article}
+\usepackage{inp}
+
+\begin{document}
+
+\section*{$name}
+
+\begin{minipage}[t]{0.4\textwidth}
+\vspace{0pt}
+{\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}[t]{@{}lr}
+\toprule
+Order ($$n$$) & $order \\
+Size ($$e$$) & $size \\
+Independence number ($$\alpha$$) & $alpha \\
+\midrule
+$$\alpha$$-properties & \\
+\midrule
+$alphaproperties
+\midrule
+Lower bound & Value \\
+\midrule
+$lowerbounds
+\midrule
+Upper bound & Value \\
+\midrule
+$upperbounds
+\bottomrule
+\end{tabular}
+}
+\end{minipage}%
+\begin{minipage}[t]{0.55\textwidth}
+\vspace{0pt}
+\centering
+$tikzpicture
+\end{minipage}
+\end{document}

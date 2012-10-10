@@ -22,6 +22,7 @@ import cvxopt.base
 import cvxopt.solvers
 import datetime
 from string import Template
+import operator
 import os
 import re
 import subprocess
@@ -42,7 +43,7 @@ except ImportError:
 
 class INPGraph(Graph):
     _nauty_count_pattern = re.compile(r'>Z (\d+) graphs generated')
-    _save_path = os.path.expanduser("~/Dropbox/INP/")
+    _save_path = os.path.expanduser("~/Dropbox/INP")
 
     def __init__(self, *args, **kwargs):
         Graph.__init__(self, *args, **kwargs)
@@ -152,8 +153,9 @@ class INPGraph(Graph):
                             pbar.finish()
                         print "Found a difficult graph: {0}".format(g.graph6_string())
 
-                        if save:
-                            g.save_files()
+                    if save:
+                        g.save_files()
+
                     return g
 
                 counter += 1
@@ -200,7 +202,7 @@ class INPGraph(Graph):
 
         while True:
             try:
-                g = cls._next_difficult_graph_of_order(n, verbose)
+                g = cls._next_difficult_graph_of_order(n, verbose, save)
                 if g is None:
                     n += 1
                 else:
@@ -307,7 +309,7 @@ class INPGraph(Graph):
         # TODO: Is it possible to write good tests for this?
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         filename = "difficult_graph_{0}".format(timestamp)
-        folder_path = "{0}{1}".format(self._save_path, filename)
+        folder_path = "{0}/{1}".format(self._save_path, filename)
 
         try:
             if not os.path.exists(folder_path):
@@ -322,35 +324,48 @@ class INPGraph(Graph):
             #print "Plot saved to {0}{1}.png".format(folder_path, filename)
             saved_plot = True
         except IOError:
-            print "Couldn't save {0}{1}.png".format(folder_path, filename)
+            print "Couldn't save {0}/{1}.png".format(folder_path, filename)
 
         try:
             self._export_pdf(folder_path, filename)
             #print "Dossier saved to {0}{1}.pdf".format(folder_path, filename)
             saved_pdf = True
         except IOError:
-            print "Couldn't save {0}{1}.pdf".format(folder_path, filename)
+            print "Couldn't save {0}/{1}.pdf".format(folder_path, filename)
 
         if saved_plot or saved_pdf:
             print "Saved graph information to: \n  {0}".format(folder_path)
 
     def _export_pdf(self, folder_path, filename):
+        # TODO: Write documentation
         # TODO: Is it possible to write good tests for this?
-        r"""
-        Generate the latex for the information box.
-        """
-        info_table = """
-        \\rowcolor{{LightGray}} $n$ & {0} \\\\
-        \\rowcolor{{LightGray}} $e$ & {1} \\\\
-        \\rowcolor{{LightGray}} $\\alpha$ & {2} \\\\
-        """.format(self.order(), self.size(), self.independence_number())
+        # TODO: Check for tkz style files
+        
+        # Generate the latex for the alpha properties table
+        alphaproperties = {}
+        for func in self._alpha_properties:
+            name = func.__name__
+            value = func(self)
+            alphaproperties[name] = value
+
+        alphaproperties_sorted = sorted(alphaproperties.iteritems(), key=operator.itemgetter(1), reverse=True)
+        alphaproperties_table = ''
+
+        for (name, value) in alphaproperties_sorted:
+            alphaproperties_table += \
+                "{0} & {1} \\\\\n".format(self._latex_escape(name), ["\ding{56}", "\ding{51}"][value])
 
         # Generate the latex for the lower bounds table
-        lowerbounds_table = ''
+        lowerbounds = {}
         for func in self._lower_bounds:
             name = func.__name__
             value = func(self)
+            lowerbounds[name] = value
 
+        lowerbounds_sorted = sorted(lowerbounds.iteritems(), key=operator.itemgetter(1))
+        lowerbounds_table = ''
+
+        for (name, value) in lowerbounds_sorted:
             try:
                 if value in ZZ:
                     lowerbounds_table += \
@@ -358,17 +373,23 @@ class INPGraph(Graph):
                 else:
                     lowerbounds_table += \
                        "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
+                # lowerbounds_table += "{0} & {1} \\\\\n".format(self._latex_escape(name), value)
             except (AttributeError, ValueError):
                 print "Can't format", name, value, "for LaTeX output."
                 lowerbounds_table += \
                     "{0} & {1} \\\\\n".format(self._latex_escape(name), '?')
 
         # Generate the latex for the upper bounds table
-        upperbounds_table = ''
+        upperbounds = {}
         for func in self._upper_bounds:
             name = func.__name__
             value = func(self)
+            upperbounds[name] = value
 
+        upperbounds_sorted = sorted(upperbounds.iteritems(), key=operator.itemgetter(1))
+        upperbounds_table = ''
+
+        for (name, value) in upperbounds_sorted:
             try:
                 if value in ZZ:
                     upperbounds_table += \
@@ -381,24 +402,24 @@ class INPGraph(Graph):
                 upperbounds_table += \
                     "{0} & {1} \\\\\n".format(self._latex_escape(name), '?')
 
-        # Generate the latex for the alpha properties table
-        alphaproperties_table = ''
-        for func in self._alpha_properties:
-            name = func.__name__
-            alphaproperties_table += \
-                "{0} \\\\\n".format(self._latex_escape(name))
 
         # Insert all the generated latex into the template file
-        template_file = open('dossier_template.tex', 'r')
+        template_file = open('template.tex', 'r')
         template = template_file.read()
         s = Template(template)
 
-        output = s.substitute(graph=latex(self), 
-                              name=self._latex_escape(self.graph6_string()),
-                              info=info_table,
+        self.set_pos(self.layout_circular())
+        opts = self.latex_options()
+        opts.set_option('tkz_style', 'Dijkstra')
+
+        output = s.substitute(name=self._latex_escape(self.graph6_string()),
+                              order=self.order(),
+                              size=self.size(),
+                              alpha=self.independence_number(),
+                              alphaproperties=alphaproperties_table,
                               lowerbounds=lowerbounds_table, 
                               upperbounds=upperbounds_table,
-                              alphaproperties=alphaproperties_table)
+                              tikzpicture=latex(self))
         latex_filename = "{0}/{1}.tex".format(folder_path, filename)
 
         # Write the latex to a file then run pdflatex on it
@@ -1056,7 +1077,6 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.borg()
             2
@@ -1078,7 +1098,6 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.PathGraph(5))
             sage: G.cut_vertices_bound()
             3
