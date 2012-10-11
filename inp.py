@@ -369,7 +369,7 @@ class INPGraph(Graph):
             try:
                 if value in ZZ:
                     lowerbounds_table += \
-                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(value))
+                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(Integer(value)))
                 else:
                     lowerbounds_table += \
                        "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
@@ -393,7 +393,7 @@ class INPGraph(Graph):
             try:
                 if value in ZZ:
                     upperbounds_table += \
-                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(value))
+                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(Integer(value)))
                 else:
                     upperbounds_table += \
                         "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
@@ -456,6 +456,10 @@ class INPGraph(Graph):
         for old, new in escape_chars.iteritems():
             str = str.replace(old, new)
         return str
+
+    @classmethod
+    def KillerGraph(cls):
+        return cls('EXCO')
 
     def matching_number(self):
         # TODO: This needs to be updated when Sage 5.3 is released.
@@ -743,7 +747,7 @@ class INPGraph(Graph):
     ###########################################################################
 
     def matching_lower_bound(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the matching number lower bound.
 
@@ -761,6 +765,7 @@ class INPGraph(Graph):
 
     def residue(self):
         # TODO: Write tests
+        # TODO: Write documentation
         seq = self.degree_sequence()
 
         while seq[0] > 0:
@@ -773,13 +778,14 @@ class INPGraph(Graph):
 
     def average_degree_bound(self):
         # TODO: Write tests
+        # TODO: Write documentation
         n = Integer(self.order())
         d = Rational(self.average_degree())
         return n / (1 + d)
     average_degree_bound._is_lower_bound = True
 
     def caro_wei(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
 
         EXAMPLES:
@@ -816,35 +822,74 @@ class INPGraph(Graph):
 
     def harant(self):
         # TODO: Write tests
+        # TODO: Write documentation
         n = Integer(self.order())
         e = Integer(self.size())
         term = 2 * e + n + 1
         return (1/2) * (term - sqrt(term^2 - 4*n^2))
     harant._is_lower_bound = True
 
+    def max_even_minus_even_horizontal(self):
+        r"""
+        Compute `max\{e(v) - eh(v)}`, where `e(v)` is the number of vertices
+        at even distance from vertex `v`, and `eh(v)` is the number of even
+        horizontal edges with respect to `v`, that is, the number of edges `e`
+        where both endpoints of `e` are at even distance from `v`.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(2).max_even_minus_even_horizontal()
+            Traceback (most recent call last):
+              ...
+            ValueError: This bound is not defined for disconnected graphs.
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).max_even_minus_even_horizontal()
+            1
+
+        ::
+            sage: INPGraph(graphs.PathGraph(3)).max_even_minus_even_horizontal()
+            2
+
+        ::
+            sage: INPGraph.KillerGraph().max_even_minus_even_horizontal()
+            3
+
+        ::
+            sage: INPGraph(graphs.CycleGraph(5)).max_even_minus_even_horizontal()
+            2
+        """
+        if not self.is_connected():
+            raise ValueError, "This bound is not defined for disconnected graphs."
+
+        dist = self.distance_all_pairs()
+        even = lambda v: [w for w in self.vertices() if dist[v][w] % 2 == 0]
+        eh = lambda v: self.subgraph(even(v)).size()
+
+        return max([len(even(v)) - eh(v) for v in self.vertices()])
+    max_even_minus_even_horizontal._is_lower_bound = True
+
     ###########################################################################
     # Upper bounds
     ###########################################################################
 
     def matching_upper_bound(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the matching number upper bound.
 
         EXAMPLES:
 
         ::
-
-            sage: G = INPGraph(graphs.CompleteGraph(3))
-            sage: G.matching_upper_bound()
+            sage: INPGraph(graphs.CompleteGraph(3)).matching_upper_bound()
             2
-
         """
         return self.order() - self.matching_number()
     matching_upper_bound._is_upper_bound = True
 
     def fractional_alpha(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the fractional independence number of the graph.
 
@@ -877,7 +922,6 @@ class INPGraph(Graph):
     fractional_alpha._is_upper_bound = True
 
     def lovasz_theta(self):
-        # TODO: Write better tests
         # TODO: There has to be a nicer way of doing this.
         r"""
         Compute the value of the Lovasz theta function of the given graph.
@@ -1109,5 +1153,5 @@ class INPGraph(Graph):
     cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part, is_fold_reducible]
-    _lower_bounds = [matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
+    _lower_bounds = [max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
