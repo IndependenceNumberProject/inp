@@ -469,11 +469,32 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-            sage: tests = [2, graphs.CompleteGraph(3), graphs.PathGraph(3), \
-                           graphs.StarGraph(3), 'EXCO', graphs.CycleGraph(5), \
-                           graphs.PetersenGraph()]
-            sage: [INPGraph(g).matching_number() for g in tests]
-            [0, 1, 1, 1, 2, 2, 5]
+            sage: INPGraph(2).matching_number()
+            0
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).matching_number()
+            1
+
+        ::
+            sage: INPGraph(graphs.PathGraph(3)).matching_number()
+            1
+
+        ::
+            sage: INPGraph(graphs.StarGraph(3)).matching_number()
+            1
+
+        ::
+            sage: INPGraph.KillerGraph().matching_number()
+            2
+
+        ::
+            sage: INPGraph(graphs.CycleGraph(5)).matching_number()
+            2
+
+        ::  
+            sage: INPGraph(graphs.PetersenGraph()).matching_number()
+            5
 
         WARNINGS:
 
@@ -495,19 +516,38 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-            sage: tests = [2, graphs.CompleteGraph(3), graphs.PathGraph(3), \
-                           graphs.StarGraph(3), 'EXCO', graphs.CycleGraph(5), \
-                           graphs.PetersenGraph()]
-            sage: [INPGraph(g).independence_number() for g in tests]
-            [2, 1, 2, 3, 4, 2, 4]
+            sage: INPGraph(2).independence_number()
+            2
 
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).independence_number()
+            1
+
+        ::
+            sage: INPGraph(graphs.PathGraph(3)).independence_number()
+            2
+
+        ::
+            sage: INPGraph(graphs.StarGraph(3)).independence_number()
+            3
+
+        ::
+            sage: INPGraph.KillerGraph().independence_number()
+            4
+
+        ::
+            sage: INPGraph(graphs.CycleGraph(5)).independence_number()
+            2
+
+        ::  
+            sage: INPGraph(graphs.PetersenGraph()).independence_number()
+            4
         """
         return int(len(self.independent_set()))
 
     alpha = independence_number
 
     def bipartite_double_cover(self):
-        # TODO: Simplify these tests into a loop
         r"""
         Return a bipartite double cover of the graph, also known as the
         bidouble.
@@ -557,6 +597,7 @@ class INPGraph(Graph):
 
     def closed_neighborhood(self, verts):
         # TODO: Write tests
+        # TODO: Write documentation
         if isinstance(verts, list):
             neighborhood = []
             for v in verts:
@@ -567,10 +608,12 @@ class INPGraph(Graph):
 
     def closed_neighborhood_subgraph(self, verts):
         # TODO: Write tests
+        # TODO: Write documentation
         return self.subgraph(self.closed_neighborhood(verts))
 
     def open_neighborhood(self, verts):
         # TODO: Write tests
+        # TODO: Write documentation
         if isinstance(verts, list):
             neighborhood = []
             for v in verts:
@@ -581,14 +624,17 @@ class INPGraph(Graph):
 
     def open_neighborhood_subgraph(self, verts):
         # TODO: Write tests
+        # TODO: Write documentation
         return self.subgraph(self.open_neighborhood(verts))
 
     def max_degree(self):
         # TODO: Write tests
+        # TODO: Write documentation
         return max(self.degree())
 
     def min_degree(self):
         # TODO: Write tests
+        # TODO: Write documentation
         return min(self.degree())
 
     def union_MCIS(self):
@@ -599,15 +645,12 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-            sage: G = INPGraph('Cx')
-            sage: G.union_MCIS()
+            sage: INPGraph('Cx').union_MCIS()
             [0, 1, 3]
 
         ::
-            sage: G = INPGraph(graphs.CycleGraph(4))
-            sage: G.union_MCIS()
+            sage: INPGraph(graphs.CycleGraph(4)).union_MCIS()
             [0, 1, 2, 3]
-
         """
         b = self.bipartite_double_cover()
         alpha = b.order() - b.matching_number()
@@ -625,6 +668,7 @@ class INPGraph(Graph):
 
     def has_foldable_vertex(self):
         # TODO: Write tests
+        # TODO: Write documentation
         # TODO: Is it better to write this using any()?
         for v in self.vertices():
             # true if N(v) contains no anti-triangles
@@ -635,6 +679,7 @@ class INPGraph(Graph):
 
     def has_foldable_vertex_at(self, v):
         # TODO: Write tests
+        # TODO: Write documentation
         return self.open_neighborhood_subgraph(v).complement().is_triangle_free()
 
     def fold_at(self, v):
@@ -674,21 +719,25 @@ class INPGraph(Graph):
 
     def has_max_degree_order_minus_one(self):
         # TODO: Write tests
+        # TODO: Write documentation
         return self.max_degree() == self.order() - 1
     has_max_degree_order_minus_one._is_alpha_property = True
 
     def is_claw_free(self):
         # TODO: Write tests
+        # TODO: Write documentation
         return self.subgraph_search_count(graphs.ClawGraph()) == 0
     is_claw_free._is_alpha_property = True
 
     def has_pendant_vertex(self):
         # TODO: Write tests
+        # TODO: Write documentation
         return 1 in self.degree()
     has_pendant_vertex._is_alpha_property = True
 
     def has_simplicial_vertex(self):
         # TODO: Write tests
+        # TODO: Write documentation
         # TODO: Is it better to write this using any()?
         for v in self.vertices():
             if self.open_neighborhood_subgraph(v).is_clique():
@@ -699,6 +748,7 @@ class INPGraph(Graph):
 
     def is_KE(self):
         # TODO: Write tests
+        # TODO: Write documentation
         c = self.union_MCIS()
         nc = []
         for v in c:
@@ -709,6 +759,7 @@ class INPGraph(Graph):
 
     def is_almost_KE(self):
         # TODO: Write tests
+        # TODO: Write documentation
         # TODO: Is it better to write this using any()?
         subsets = combinations_iterator(self.vertices(), self.order() - 1)
         for subset in subsets:
@@ -720,6 +771,7 @@ class INPGraph(Graph):
 
     def has_nonempty_KE_part(self):
         # TODO: Write tests
+        # TODO: Write documentation
         if self.union_MCIS():
             return True
         else:
@@ -728,6 +780,7 @@ class INPGraph(Graph):
 
     def is_fold_reducible(self):
         # TODO: Write tests
+        # TODO: Write documentation
         if not self.has_foldable_vertex():
             return False
 
@@ -786,6 +839,7 @@ class INPGraph(Graph):
 
     def caro_wei(self):
         # TODO: Write more tests
+        # TODO: Write documentation
         r"""
 
         EXAMPLES:
@@ -808,6 +862,7 @@ class INPGraph(Graph):
 
     def wilf(self):
         # TODO: Write tests
+        # TODO: Write documentation
         n = Integer(self.order())
         max_eigenvalue = max(self.adjacency_matrix().eigenvalues())
         return n / (1 + max_eigenvalue)
@@ -815,6 +870,7 @@ class INPGraph(Graph):
 
     def hansen_zheng_lower_bound(self):
         # TODO: Write tests
+        # TODO: Write documentation
         n = Integer(self.order())
         e = Integer(self.size())
         return ceil(n - (2 * e)/(1 + floor(2 * e / n)))
@@ -980,7 +1036,7 @@ class INPGraph(Graph):
     lovasz_theta._is_upper_bound = True
 
     def kwok(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the upper bound `\alpha \leq n - \frac{e}{\Delta}` that is
         credited to Kwok, or possibly "folklore."
@@ -988,17 +1044,12 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
-            sage: G = INPGraph(graphs.CompleteGraph(3))
-            sage: G.kwok()
+            sage: INPGraph(graphs.CompleteGraph(3)).kwok()
             3/2
 
         ::
-
-            sage: G = INPGraph(graphs.PathGraph(3))
-            sage: G.kwok()
+            sage: INPGraph(graphs.PathGraph(3)).kwok()
             2
-
         """
         n = Integer(self.order())
         e = Integer(self.size())
@@ -1011,7 +1062,7 @@ class INPGraph(Graph):
     kwok._is_upper_bound = True
 
     def hansen_zheng_upper_bound(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute an upper bound `\frac{1}{2} + \sqrt{\frac{1/4} + n^2 - n - 2e}` 
         given by Hansen and Zheng, 1993.
@@ -1019,7 +1070,6 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.hansen_zheng_upper_bound()
             1
@@ -1031,7 +1081,7 @@ class INPGraph(Graph):
     hansen_zheng_upper_bound._is_upper_bound = True
 
     def min_degree_bound(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the upper bound `\alpha \leq n - \delta`. This bound probably
         belong to "folklore."
@@ -1039,13 +1089,11 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.min_degree_bound()
             1
 
         ::
-
             sage: G = INPGraph(graphs.PathGraph(4))
             sage: G.min_degree_bound()
             3
@@ -1055,7 +1103,7 @@ class INPGraph(Graph):
     min_degree_bound._is_upper_bound = True
 
     def cvetkovic(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the Cvetkovic bound `\alpha \leq p_0 + min\{p_-, p_+\}`, where
         `p_-, p_0, p_+` denote the negative, zero, and positive eigenvalues 
@@ -1064,7 +1112,6 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.PetersenGraph())
             sage: G.cvetkovic()
             4
@@ -1084,20 +1131,18 @@ class INPGraph(Graph):
     cvetkovic._is_upper_bound = True
 
     def annihilation_number(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the annhilation number of the graph.
 
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.annihilation_number()
             2
 
         ::
-
             sage: G = INPGraph(graphs.StarGraph(3))
             sage: G.annihilation_number()
             4
@@ -1114,15 +1159,14 @@ class INPGraph(Graph):
     annihilation_number._is_upper_bound = True
 
     def borg(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
         Compute the upper bound given by Borg.
 
         EXAMPLES:
 
         ::
-            sage: G = INPGraph(graphs.CompleteGraph(3))
-            sage: G.borg()
+            sage: INPGraph(graphs.CompleteGraph(3)).borg()
             2
 
         """
@@ -1136,7 +1180,7 @@ class INPGraph(Graph):
     borg._is_upper_bound = True
 
     def cut_vertices_bound(self):
-        # TODO: Write better tests
+        # TODO: Write more tests
         r"""
 
         EXAMPLES:
