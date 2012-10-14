@@ -22,7 +22,6 @@ import cvxopt.base
 import cvxopt.solvers
 import datetime
 from string import Template
-import operator
 import os
 import re
 import subprocess
@@ -1251,5 +1250,5 @@ class INPGraph(Graph):
     cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [Graph.is_bipartite, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
-    _lower_bounds = [five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
+    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
