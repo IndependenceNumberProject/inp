@@ -468,8 +468,6 @@ class INPGraph(Graph):
                               tikzpicture2=circular_tikz_latex)
         latex_filename = "{0}/{1}.tex".format(folder_path, filename)
 
-
-
         # Write the latex to a file then run pdflatex on it
         # TODO: Handle calling pdflatex and its errors better.
         try:
@@ -558,28 +556,16 @@ class INPGraph(Graph):
         ::
             sage: INPGraph(2).independence_number()
             2
-
-        ::
             sage: INPGraph(graphs.CompleteGraph(3)).independence_number()
             1
-
-        ::
             sage: INPGraph(graphs.PathGraph(3)).independence_number()
             2
-
-        ::
             sage: INPGraph(graphs.StarGraph(3)).independence_number()
             3
-
-        ::
             sage: INPGraph.KillerGraph().independence_number()
             4
-
-        ::
             sage: INPGraph(graphs.CycleGraph(5)).independence_number()
             2
-
-        ::  
             sage: INPGraph(graphs.PetersenGraph()).independence_number()
             4
         """
@@ -675,8 +661,6 @@ class INPGraph(Graph):
         ::
             sage: INPGraph('Cx').union_MCIS()
             [0, 1, 3]
-
-        ::
             sage: INPGraph(graphs.CycleGraph(4)).union_MCIS()
             [0, 1, 2, 3]
         """
@@ -721,8 +705,6 @@ class INPGraph(Graph):
             sage: G = INPGraph('EqW_')
             sage: G.fold_at(0).is_isomorphic(graphs.ClawGraph())
             True
-
-        ::
             sage: G = INPGraph('G{O`?_')
             sage: G.fold_at(0).graph6_string()
             'E?dw'
@@ -851,7 +833,6 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.matching_lower_bound()
             1
@@ -889,17 +870,12 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.caro_wei()
             1
-
-        ::
-
             sage: G = INPGraph(graphs.PathGraph(3))
             sage: G.caro_wei()
             4/3
-
         """
         return sum([1/(1+Integer(d)) for d in self.degree()])
     caro_wei._is_lower_bound = True
@@ -938,7 +914,7 @@ class INPGraph(Graph):
 
         EXAMPLES:
 
-        ::
+        This isn't defined for disconnected graphs::
             sage: INPGraph(2).max_even_minus_even_horizontal()
             Traceback (most recent call last):
               ...
@@ -947,16 +923,10 @@ class INPGraph(Graph):
         ::
             sage: INPGraph(graphs.CompleteGraph(3)).max_even_minus_even_horizontal()
             1
-
-        ::
             sage: INPGraph(graphs.PathGraph(3)).max_even_minus_even_horizontal()
             2
-
-        ::
             sage: INPGraph.KillerGraph().max_even_minus_even_horizontal()
             3
-
-        ::
             sage: INPGraph(graphs.CycleGraph(5)).max_even_minus_even_horizontal()
             2
         """
@@ -1005,17 +975,12 @@ class INPGraph(Graph):
         EXAMPLES:
 
         ::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.fractional_alpha()
             1.5
-
-        ::
-
             sage: G = INPGraph(graphs.PathGraph(3))
             sage: G.fractional_alpha()
             2.0
-
         """
         p = MixedIntegerLinearProgram(maximization=True)
         x = p.new_variable()
@@ -1084,7 +1049,9 @@ class INPGraph(Graph):
         sol = cvxopt.solvers.sdp(c, Gs=[-X], hs=[-cvxopt.base.matrix([0.0]*(n*n-1) + [-1.0], (n,n))])
         v = 1.0 + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
-        # TODO: Rounding here is a total hack
+        # TODO: Rounding here is a total hack, sometimes it can come in slightly
+        # under the analytical answer, for example, 2.999 instead of 3, which
+        # screws up the floor() call when checking difficult graphs.
         return round(v[0], 3)
     lovasz_theta._is_upper_bound = True
 
@@ -1099,8 +1066,6 @@ class INPGraph(Graph):
         ::
             sage: INPGraph(graphs.CompleteGraph(3)).kwok()
             3/2
-
-        ::
             sage: INPGraph(graphs.PathGraph(3)).kwok()
             2
         """
@@ -1126,7 +1091,6 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.hansen_zheng_upper_bound()
             1
-
         """
         n = Integer(self.order())
         e = Integer(self.size())
@@ -1145,12 +1109,9 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.min_degree_bound()
             1
-
-        ::
             sage: G = INPGraph(graphs.PathGraph(4))
             sage: G.min_degree_bound()
             3
-
         """
         return self.order() - self.min_degree()
     min_degree_bound._is_upper_bound = True
@@ -1168,7 +1129,6 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.PetersenGraph())
             sage: G.cvetkovic()
             4
-
         """
         eigenvalues = self.adjacency_matrix().eigenvalues()
         [positive, negative, zero] = [0, 0, 0]
@@ -1194,12 +1154,9 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.annihilation_number()
             2
-
-        ::
             sage: G = INPGraph(graphs.StarGraph(3))
             sage: G.annihilation_number()
             4
-
         """
         seq = sorted(self.degree())
         n = self.order()
@@ -1221,7 +1178,6 @@ class INPGraph(Graph):
         ::
             sage: INPGraph(graphs.CompleteGraph(3)).borg()
             2
-
         """
         n = Integer(self.order())
         Delta = Integer(self.max_degree())
@@ -1242,7 +1198,6 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.PathGraph(5))
             sage: G.cut_vertices_bound()
             3
-
         """
         n = Integer(self.order())
         C = Integer(len(self.blocks_and_cut_vertices()[1]))
