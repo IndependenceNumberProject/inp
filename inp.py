@@ -447,12 +447,16 @@ class INPGraph(Graph):
         template = template_file.read()
         s = Template(template)
 
-        self.set_pos(self.layout_circular())
+        # Want to use the circular embedding and Dijkstra style for the PDF,
+        # but we'll set it back to whatever the user had after we're done.
+
         opts = self.latex_options()
-        # Want to use the Dijkstra style for the PDF, but we'll set it back
-        # to whatever the user had after we're done.
         old_style = opts.get_option('tkz_style')
         opts.set_option('tkz_style', 'Dijkstra')
+        default_tikz_latex = latex(self)
+        self.set_pos(self.layout_circular())
+        circular_tikz_latex = latex(self)
+        opts.set_option('tkz_style', old_style)
 
         output = s.substitute(name=self._latex_escape(self.graph6_string()),
                               order=self.order(),
@@ -461,10 +465,11 @@ class INPGraph(Graph):
                               alphaproperties=alphaproperties_table,
                               lowerbounds=lowerbounds_table, 
                               upperbounds=upperbounds_table,
-                              tikzpicture=latex(self))
+                              tikzpicture1=default_tikz_latex,
+                              tikzpicture2=circular_tikz_latex)
         latex_filename = "{0}/{1}.tex".format(folder_path, filename)
 
-        opts.set_option('tkz_style', old_style)
+
 
         # Write the latex to a file then run pdflatex on it
         # TODO: Handle calling pdflatex and its errors better.
@@ -506,37 +511,26 @@ class INPGraph(Graph):
         return cls('EXCO')
 
     def matching_number(self):
-        # TODO: This needs to be updated when Sage 5.3 is released.
+        # TODO: Memoize this
         r"""
-        Compute the traditional matching number `\mu`.
+        Compute the traditional matching number `\mu`, that is, the size of a
+        maximum matching.
 
         EXAMPLES:
 
         ::
             sage: INPGraph(2).matching_number()
             0
-
-        ::
             sage: INPGraph(graphs.CompleteGraph(3)).matching_number()
             1
-
-        ::
             sage: INPGraph(graphs.PathGraph(3)).matching_number()
             1
-
-        ::
             sage: INPGraph(graphs.StarGraph(3)).matching_number()
             1
-
-        ::
             sage: INPGraph.KillerGraph().matching_number()
             2
-
-        ::
             sage: INPGraph(graphs.CycleGraph(5)).matching_number()
             2
-
-        ::  
             sage: INPGraph(graphs.PetersenGraph()).matching_number()
             5
 
@@ -548,8 +542,9 @@ class INPGraph(Graph):
         edge-weighted graph will NOT give the usual matching number.
         """
         if float(version) < 5.3:
-            raise RuntimeError, "This function requires at least Sage 5.3."
-        return int(self.matching(value_only=True, use_edge_labels=False))
+            return int(self.matching(value_only=True))
+        else:
+            return int(self.matching(value_only=True, use_edge_labels=False))
 
     mu = matching_number
 
@@ -604,33 +599,21 @@ class INPGraph(Graph):
             sage: b = INPGraph(2).bipartite_double_cover()
             sage: b.is_isomorphic(Graph(4))
             True
-
-        ::
             sage: b = INPGraph(graphs.CompleteGraph(3)).bipartite_double_cover()
             sage: b.is_isomorphic(graphs.CycleGraph(6))
             True
-
-        ::
             sage: b = INPGraph(graphs.PathGraph(3)).bipartite_double_cover()
             sage: b.is_isomorphic(Graph('EgCG'))
             True
-
-        ::
             sage: b = INPGraph(graphs.StarGraph(3)).bipartite_double_cover()
             sage: b.is_isomorphic(Graph('Gs?GGG'))
             True
-
-        ::
             sage: b = INPGraph('EXCO').bipartite_double_cover()
             sage: b.is_isomorphic(Graph('KXCO?C@??A_@'))
             True
-
-        ::
             sage: b = INPGraph(graphs.CycleGraph(5)).bipartite_double_cover()
             sage: b.is_isomorphic(graphs.CycleGraph(10))
             True
-
-        ::
             sage: b = INPGraph(graphs.PetersenGraph()).bipartite_double_cover()
             sage: b.is_isomorphic(Graph('SKC_GP@_a?O?C?G??__OO?POAI??a_@D?'))
             True
@@ -772,7 +755,8 @@ class INPGraph(Graph):
     def is_claw_free(self):
         # TODO: Write tests
         # TODO: Write documentation
-        return self.subgraph_search_count(graphs.ClawGraph()) == 0
+        #return self.subgraph_search_count(graphs.ClawGraph()) == 0
+        return self.subgraph_search(graphs.ClawGraph(), induced=True) is None
     is_claw_free._is_alpha_property = True
 
     def has_pendant_vertex(self):
@@ -822,7 +806,21 @@ class INPGraph(Graph):
         #     return True
         # else:
         #     return False
-        return bool(self.union_MCIS())
+        #return bool(self.union_MCIS())
+
+        # We really only want to check if one vertex works
+        # TODO: Speed this up further by removing copying
+        b = self.bipartite_double_cover()
+        alpha = b.order() - b.matching_number()
+
+        for v in self.vertices():
+            test = b.copy()
+            test.delete_vertices(b.closed_neighborhood([(v,0), (v,1)]))
+            alpha_test = test.order() - test.matching_number() + 2
+            if alpha_test == alpha:
+                return True
+
+        return False
     has_nonempty_KE_part._is_alpha_property = True
 
     def is_fold_reducible(self):
@@ -1252,6 +1250,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [is_claw_free, has_simplicial_vertex, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _alpha_properties = [Graph.is_bipartite, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
     _lower_bounds = [five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
