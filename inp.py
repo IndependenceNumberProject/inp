@@ -34,6 +34,7 @@ import time
 from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
                      MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
+from sage.version import version
 
 try:
     from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
@@ -55,6 +56,10 @@ class INPGraph(Graph):
         if not is_package_installed("nauty"):
             raise TypeError, "The nauty package is required to survey a bound or property."
 
+        # Graphs with < 6 vertices will have pendant or foldable vertices.
+        if order < 6:
+            raise ValueError, "There are no difficult graphs with less than 6 vertices."
+
         sys.stdout.write("Counting graphs of order {0}... ".format(order))
         sys.stdout.flush()
         num_graphs_to_check = cls.count_viable_graphs(order)
@@ -70,19 +75,26 @@ class INPGraph(Graph):
         hits = 0
 
         is_alpha_property = hasattr(func, '_is_alpha_property') and func._is_alpha_property
-        is_bound = (hasattr(func, '_is_lower_bound') and func._is_lower_bound) or \
-                   (hasattr(func, '_is_upper_bound') and func._is_upper_bound)
+        is_lower_bound = hasattr(func, '_is_lower_bound') and func._is_lower_bound
+        is_upper_bound = hasattr(func, '_is_upper_bound') and func._is_upper_bound
 
         while True:
             try:
                 g = INPGraph(gen.next())
 
-                if is_alpha_property:
-                    if func(g):
-                        hits += 1
-                elif is_bound:
-                    if func(g) == g.independence_number():
-                        hits += 1
+                try:
+                    if is_alpha_property:
+                        if func(g):
+                            hits += 1
+                    elif is_lower_bound:
+                        if ceil(func(g)) == g.independence_number():
+                            hits += 1
+                    elif is_upper_bound:
+                        if floor(func(g)) == g.independence_number():
+                            hits += 1
+
+                except ValueError:
+                    pass
 
                 counter += 1
 
@@ -96,7 +108,7 @@ class INPGraph(Graph):
 
                 if is_alpha_property:
                     print "{0} out of {1} graphs of order {2} satisfied {3}.".format(hits, counter, order, func.__name__)
-                elif is_bound:
+                elif is_lower_bound or is_upper_bound:
                     print "{0} out of {1} graphs of order {2} were predicted by {3}.".format(hits, counter, order, func.__name__)
                 return
 
@@ -340,40 +352,57 @@ class INPGraph(Graph):
         # TODO: Write documentation
         # TODO: Is it possible to write good tests for this?
         # TODO: Check for tkz style files
+        # TODO: Overhaul catching bad values, sorting
         
         # Generate the latex for the alpha properties table
         alphaproperties = {}
         for func in self._alpha_properties:
             name = func.__name__
-            value = func(self)
-            alphaproperties[name] = value
+            try:
+                if func(self):
+                    print_value = "\ding{51}"
+                else:
+                    print_value = "\ding{56}"
+            except ValueError:
+                print_value = "$\\varnothing$"
+            alphaproperties[name] = print_value
 
-        alphaproperties_sorted = sorted(alphaproperties.iteritems(), key=operator.itemgetter(1), reverse=True)
+        # Sort by name ascending
+        alphaproperties_keys_sorted = sorted(alphaproperties.keys())
         alphaproperties_table = ''
 
-        for (name, value) in alphaproperties_sorted:
+        for name in alphaproperties_keys_sorted:
+            print_value = alphaproperties[name]
             alphaproperties_table += \
-                "{0} & {1} \\\\\n".format(self._latex_escape(name), ["\ding{56}", "\ding{51}"][value])
+                "{0} & {1} \\\\\n".format(self._latex_escape(name), print_value)
 
         # Generate the latex for the lower bounds table
         lowerbounds = {}
         for func in self._lower_bounds:
             name = func.__name__
-            value = func(self)
-            lowerbounds[name] = value
+            try:
+                sort_value = func(self)
+                if sort_value in ZZ:
+                    print_value = Integer(sort_value).str()
+                elif sort_value in RR:
+                    print_value = "{0:.3f}".format(float(sort_value))
+                else:
+                    print_value = "?"
+            except ValueError:
+                sort_value = -1
+                print_value = "$\\varnothing$"
+            lowerbounds[name] = (sort_value, print_value)
 
-        lowerbounds_sorted = sorted(lowerbounds.iteritems(), key=operator.itemgetter(1))
+        # Sort by sort_value ascending, then by name ascending
+        lowerbounds_keys_sorted = sorted(lowerbounds.keys(), cmp=lambda a,b: cmp((lowerbounds[a][0], a), (lowerbounds[b][0], b)))
         lowerbounds_table = ''
 
-        for (name, value) in lowerbounds_sorted:
+        for name in lowerbounds_keys_sorted:
+            sort_value, print_value = lowerbounds[name]
             try:
-                if value in ZZ:
-                    lowerbounds_table += \
-                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(Integer(value)))
-                else:
-                    lowerbounds_table += \
-                       "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
-                # lowerbounds_table += "{0} & {1} \\\\\n".format(self._latex_escape(name), value)
+                 lowerbounds_table += \
+                     "{0} & {1} \\\\\n".format(self._latex_escape(name), print_value)
+
             except (AttributeError, ValueError):
                 print "Can't format", name, value, "for LaTeX output."
                 lowerbounds_table += \
@@ -383,20 +412,30 @@ class INPGraph(Graph):
         upperbounds = {}
         for func in self._upper_bounds:
             name = func.__name__
-            value = func(self)
-            upperbounds[name] = value
+            try:
+                sort_value = func(self)
+                if sort_value in ZZ:
+                    print_value = Integer(sort_value).str()
+                elif sort_value in RR:
+                    print_value = "{0:.3f}".format(float(sort_value))
+                else:
+                    print_value = "?"
 
-        upperbounds_sorted = sorted(upperbounds.iteritems(), key=operator.itemgetter(1))
+            except ValueError:
+                sort_value = sys.maxint
+                print_value = "$\\varnothing$"
+            upperbounds[name] = (sort_value, print_value)
+
+        # Sort by sort_value ascending, then by name ascending
+        upperbounds_keys_sorted = sorted(upperbounds.keys(), cmp=lambda a,b: cmp((upperbounds[a][0], a), (upperbounds[b][0], b)))
         upperbounds_table = ''
 
-        for (name, value) in upperbounds_sorted:
+        for name in upperbounds_keys_sorted:
+            sort_value, print_value = upperbounds[name]
             try:
-                if value in ZZ:
-                    upperbounds_table += \
-                        "{0} & {1} \\\\\n".format(self._latex_escape(name), int(Integer(value)))
-                else:
-                    upperbounds_table += \
-                        "{0} & {1:.3f} \\\\\n".format(self._latex_escape(name), float(value))
+                upperbounds_table += \
+                     "{0} & {1} \\\\\n".format(self._latex_escape(name), print_value)
+
             except (AttributeError, ValueError):
                 print "Can't format", name, value, "for LaTeX output."
                 upperbounds_table += \
@@ -410,6 +449,9 @@ class INPGraph(Graph):
 
         self.set_pos(self.layout_circular())
         opts = self.latex_options()
+        # Want to use the Dijkstra style for the PDF, but we'll set it back
+        # to whatever the user had after we're done.
+        old_style = opts.get_option('tkz_style')
         opts.set_option('tkz_style', 'Dijkstra')
 
         output = s.substitute(name=self._latex_escape(self.graph6_string()),
@@ -422,6 +464,8 @@ class INPGraph(Graph):
                               tikzpicture=latex(self))
         latex_filename = "{0}/{1}.tex".format(folder_path, filename)
 
+        opts.set_option('tkz_style', old_style)
+
         # Write the latex to a file then run pdflatex on it
         # TODO: Handle calling pdflatex and its errors better.
         try:
@@ -433,7 +477,7 @@ class INPGraph(Graph):
                     folder_path, latex_filename],
                     stdout=devnull, stderr=subprocess.STDOUT)
         except:
-            pass
+            print "Creating PDF failed."
 
     @classmethod
     def _latex_escape(cls, str):
@@ -503,7 +547,9 @@ class INPGraph(Graph):
         in Sage 5.2 that returns double this number. Calling this on an
         edge-weighted graph will NOT give the usual matching number.
         """
-        return int(self.matching(value_only=True))
+        if float(version) < 5.3:
+            raise RuntimeError, "This function requires at least Sage 5.3."
+        return int(self.matching(value_only=True, use_edge_labels=False))
 
     mu = matching_number
 
@@ -772,10 +818,11 @@ class INPGraph(Graph):
     def has_nonempty_KE_part(self):
         # TODO: Write tests
         # TODO: Write documentation
-        if self.union_MCIS():
-            return True
-        else:
-            return False
+        # if self.union_MCIS():
+        #     return True
+        # else:
+        #     return False
+        return bool(self.union_MCIS())
     has_nonempty_KE_part._is_alpha_property = True
 
     def is_fold_reducible(self):
@@ -925,6 +972,15 @@ class INPGraph(Graph):
 
         return max([len(even(v)) - eh(v) for v in self.vertices()])
     max_even_minus_even_horizontal._is_lower_bound = True
+
+    def five_fourteenths_lower_bound(self):
+        # TODO: Write documentation
+        # TODO: Write tests
+        if not (self.is_triangle_free() and self.max_degree() <= 3):
+            raise ValueError, "This bound is only defined for triangle-free graphs of maximum degree at most 3."
+
+        return 5 * self.order() / Integer(14)
+    five_fourteenths_lower_bound._is_lower_bound = True
 
     ###########################################################################
     # Upper bounds
@@ -1196,6 +1252,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [is_claw_free, has_simplicial_vertex, is_KE, is_almost_KE, has_nonempty_KE_part, is_fold_reducible]
-    _lower_bounds = [max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
+    _alpha_properties = [is_claw_free, has_simplicial_vertex, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _lower_bounds = [five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
