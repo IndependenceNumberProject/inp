@@ -351,7 +351,6 @@ class INPGraph(Graph):
         # TODO: Write documentation
         # TODO: Is it possible to write good tests for this?
         # TODO: Check for tkz style files
-        # TODO: Overhaul catching bad values, sorting
         
         # Generate the latex for the alpha properties table
         alphaproperties = {}
@@ -562,11 +561,13 @@ class INPGraph(Graph):
             2
             sage: INPGraph(graphs.StarGraph(3)).independence_number()
             3
-            sage: INPGraph.KillerGraph().independence_number()
+
+        You can also use :meth:alpha instead::
+            sage: INPGraph.KillerGraph().alpha()
             4
-            sage: INPGraph(graphs.CycleGraph(5)).independence_number()
+            sage: INPGraph(graphs.CycleGraph(5)).alpha()
             2
-            sage: INPGraph(graphs.PetersenGraph()).independence_number()
+            sage: INPGraph(graphs.PetersenGraph()).alpha()
             4
         """
         return int(len(self.independent_set()))
@@ -728,21 +729,53 @@ class INPGraph(Graph):
     ###########################################################################
 
     def has_max_degree_order_minus_one(self):
-        # TODO: Write tests
-        # TODO: Write documentation
+        r"""
+        Returns true if the graph has a vertex with degree `n-1`, where `n` is
+        the order of the graph.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).has_max_degree_order_minus_one()
+            True
+            sage: INPGraph(graphs.PathGraph(5)).has_max_degree_order_minus_one()
+            False
+        """
         return self.max_degree() == self.order() - 1
     has_max_degree_order_minus_one._is_alpha_property = True
 
     def is_claw_free(self):
-        # TODO: Write tests
-        # TODO: Write documentation
+        r"""
+        Returns true is the graph is claw-free, that is, it does not contain
+        any induced copies of the complete bipartite graph `K_{1,3}`.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).is_claw_free()
+            True
+            sage: INPGraph(graphs.StarGraph(5)).is_claw_free()
+            False
+            sage: INPGraph(graphs.ClawGraph()).is_claw_free()
+            False
+        """
         #return self.subgraph_search_count(graphs.ClawGraph()) == 0
         return self.subgraph_search(graphs.ClawGraph(), induced=True) is None
     is_claw_free._is_alpha_property = True
 
     def has_pendant_vertex(self):
-        # TODO: Write tests
-        # TODO: Write documentation
+        r"""
+        Returns true if the graph contains a pendant vertex, that is, a vertex
+        with degree 1.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).has_pendant_vertex()
+            False
+            sage: INPGraph(graphs.PathGraph(3)).has_pendant_vertex()
+            True
+        """
         return 1 in self.degree()
     has_pendant_vertex._is_alpha_property = True
 
@@ -836,7 +869,6 @@ class INPGraph(Graph):
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.matching_lower_bound()
             1
-
         """
         return self.order() - 2 * self.matching_number()
     matching_lower_bound._is_lower_bound = True
@@ -1050,7 +1082,7 @@ class INPGraph(Graph):
         v = 1.0 + cvxopt.base.matrix(-c, (1, d-1)) * sol['x']
 
         # TODO: Rounding here is a total hack, sometimes it can come in slightly
-        # under the analytical answer, for example, 2.999 instead of 3, which
+        # under the analytical answer, for example, 2.999998 instead of 3, which
         # screws up the floor() call when checking difficult graphs.
         return round(v[0], 3)
     lovasz_theta._is_upper_bound = True
@@ -1098,7 +1130,6 @@ class INPGraph(Graph):
     hansen_zheng_upper_bound._is_upper_bound = True
 
     def min_degree_bound(self):
-        # TODO: Write more tests
         r"""
         Compute the upper bound `\alpha \leq n - \delta`. This bound probably
         belong to "folklore."
