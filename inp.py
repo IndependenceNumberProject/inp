@@ -21,6 +21,7 @@ AUTHORS:
 import cvxopt.base
 import cvxopt.solvers
 import datetime
+from functools import wraps
 from string import Template
 import os
 import re
@@ -28,12 +29,17 @@ import subprocess
 import sys
 import time
 
-# TODO: Include more functions from survey
-
-from sage.all import Graph, graphs, Integer, Rational, floor, ceil, sqrt, \
-                     MixedIntegerLinearProgram
+from sage.graphs.graph import Graph
+from sage.graphs.graph_generators import graphs
+from sage.rings.integer import Integer
+from sage.rings.rational import Rational
+from sage.functions.other import floor, ceil, sqrt
+from sage.numerical.mip import MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
 from sage.version import version
+from sage.combinat.combinat import combinations_iterator
+
+# TODO: Include more functions from survey
 
 try:
     from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
@@ -44,6 +50,16 @@ except ImportError:
 class INPGraph(Graph):
     _nauty_count_pattern = re.compile(r'>Z (\d+) graphs generated')
     _save_path = os.path.expanduser("~/Dropbox/INP")
+
+    def memoize_graphs(func):
+        func._cache = {}
+        @wraps(func)
+        def memo(g):
+            key = g.graph6_string()
+            if key not in func._cache:
+                func._cache[key] = func(g)
+            return func._cache[key]
+        return memo
 
     def __init__(self, *args, **kwargs):
         Graph.__init__(self, *args, **kwargs)
@@ -157,7 +173,7 @@ class INPGraph(Graph):
         while True:
             try:
                 g = INPGraph(gen.next())
-
+                
                 if g.is_difficult():
                     if verbose:
                         if __has_progressbar:
@@ -178,6 +194,7 @@ class INPGraph(Graph):
             except StopIteration:
                 if verbose and __has_progressbar:
                     pbar.finish()
+                    print "No difficult graphs found."
 
                 return None
         
@@ -506,8 +523,8 @@ class INPGraph(Graph):
     def KillerGraph(cls):
         return cls('EXCO')
 
+    @memoize_graphs
     def matching_number(self):
-        # TODO: Memoize this
         r"""
         Compute the traditional matching number `\mu`, that is, the size of a
         maximum matching.
@@ -653,7 +670,6 @@ class INPGraph(Graph):
         return min(self.degree())
 
     def union_MCIS(self):
-        # TODO: Write more tests
         r"""
         Return a union of maximum critical independent sets (MCIS).
 
@@ -765,7 +781,7 @@ class INPGraph(Graph):
 
     def has_pendant_vertex(self):
         r"""
-        Returns true if the graph contains a pendant vertex, that is, a vertex
+        Returns True if the graph contains a pendant vertex, that is, a vertex
         with degree 1.
 
         EXAMPLES:
@@ -780,9 +796,19 @@ class INPGraph(Graph):
     has_pendant_vertex._is_alpha_property = True
 
     def has_simplicial_vertex(self):
-        # TODO: Write tests
-        # TODO: Write documentation
         # TODO: Is it better to write this using any()?
+        r"""
+        Returns True if the graph has a simplicial vertex, that is, a vertex
+        whose closed neighborhood forms a clique.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CycleGraph(4)).has_simplicial_vertex()
+            False
+            sage: INPGraph(graphs.CompleteGraph(4)).has_simplicial_vertex()
+            True
+        """
         for v in self.vertices():
             if self.open_neighborhood_subgraph(v).is_clique():
                 return True
@@ -790,21 +816,66 @@ class INPGraph(Graph):
         return False
     has_simplicial_vertex._is_alpha_property = True
 
+    @memoize_graphs
     def is_KE(self):
-        # TODO: Write tests
-        # TODO: Write documentation
-        c = self.union_MCIS()
-        nc = []
-        for v in c:
-            nc.extend(self.neighbors(v))
+        r"""
+        Determine if the graph is Konig-Egervary, that is, if `\alpha + \mu = n`.
 
-        return list(set(c + nc)) == self.vertices()
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.PathGraph(3)).is_KE()
+            True
+            sage: INPGraph(graphs.CycleGraph(3)).is_KE()
+            False
+
+        Not true that `\alpha_f + \mu = n` implies KE ::
+            sage: INPGraph('GCpvdw').is_KE()
+            False
+
+        The graph `H_1` from Levit-Mandrescu 2011 is KE ::
+            sage: INPGraph('Cx').is_KE()
+            True
+
+        The graph `H_2` from Levit-Mandrescu 2011 is also KE ::
+            sage: INPGraph('FhcGO').is_KE()
+            True
+
+        But `H_3` from Levit-Mandrescu 2011 is not KE ::
+            sage: INPGraph('DxC').is_KE()
+            False
+        """
+        if self.is_bipartite():
+            return True
+
+        # c = self.union_MCIS()
+        # # nc = []
+        # # for v in c:
+        # #     nc.extend(self.neighbors(v))
+        # nc = self.open_neighborhood(c)
+
+        # return list(set(c + nc)) == self.vertices()
+        return self.vertices() == self.closed_neighborhood(self.union_MCIS())
     is_KE._is_alpha_property = True
 
     def is_almost_KE(self):
         # TODO: Write tests
         # TODO: Write documentation
         # TODO: Is it better to write this using any()?
+        r"""
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).is_almost_KE()
+            True
+            sage: INPGraph(graphs.CompleteGraph(4)).is_almost_KE()
+            False
+
+        This graph is almost KE, but not KE::
+            sage: INPGraph('H?bF`xw').is_almost_KE()
+            True
+
+        """
         subsets = combinations_iterator(self.vertices(), self.order() - 1)
         for subset in subsets:
             if self.subgraph(subset).is_KE():
@@ -822,8 +893,9 @@ class INPGraph(Graph):
         #     return False
         #return bool(self.union_MCIS())
 
-        # We really only want to check if one vertex works
-        # TODO: Speed this up further by removing copying
+        # We don't need to create the whole union of MCIS, we can stop if
+        # one vertex satisfies it.
+        # TODO: Can we speed this up further by removing copying?
         b = self.bipartite_double_cover()
         alpha = b.order() - b.matching_number()
 
@@ -1235,6 +1307,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [Graph.is_bipartite, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _alpha_properties = [Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
     _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
