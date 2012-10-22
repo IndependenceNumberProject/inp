@@ -23,6 +23,7 @@ import cvxopt.solvers
 import datetime
 from functools import wraps
 from string import Template
+from itertools import imap
 import os
 import re
 import subprocess
@@ -696,19 +697,51 @@ class INPGraph(Graph):
         return result
 
     def has_foldable_vertex(self):
-        # TODO: Write tests
-        # TODO: Write documentation
-        # TODO: Is it better to write this using any()?
-        for v in self.vertices():
-            # true if N(v) contains no anti-triangles
-            #if self.open_neighborhood_subgraph(v).complement().is_triangle_free():
-            if self.has_foldable_vertex_at(v):
-                return True
-        return False
+        r"""
+        Returns true if the graph has a foldable vertex, defined in
+        Fomin-Grandoni-Kratsch 2006. A vertex `v` is foldable if `N(v)` contains
+        no anti-triangles.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph('EqW_').has_foldable_vertex()
+            True
+            sage: INPGraph('G{O`?_').has_foldable_vertex()
+            True
+
+        For each vertex `v` in `K_{3,3}`, `N(v)` contains an anti-triangle ::
+            sage: INPGraph(graphs.CompleteBipartiteGraph(3, 3)).has_foldable_vertex()
+            False
+        """
+        # for v in self.vertices():
+        #     if self.has_foldable_vertex_at(v):
+        #         return True
+        # return False
+
+        # This any/imap version should be faster.
+        return any(imap(self.has_foldable_vertex_at, self.vertices()))
+
 
     def has_foldable_vertex_at(self, v):
-        # TODO: Write tests
-        # TODO: Write documentation
+        r"""
+        Returns true if `v` is a foldable vertex in the graph, defined in
+        Fomin-Grandoni-Kratsch 2006. A vertex `v` is foldable if `N(v)` contains
+        no anti-triangles.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph('EqW_').has_foldable_vertex_at(0)
+            True
+            sage: INPGraph('EqW_').has_foldable_vertex_at(1)
+            False
+
+        For each vertex `v` in `K_{3,3}`, `N(v)` contains an anti-triangle ::
+            sage: INPGraph(graphs.CompleteBipartiteGraph(3, 3)).has_foldable_vertex_at(0)
+            False
+        """
+        # Returns True if N(v) contains no anti-triangles
         return self.open_neighborhood_subgraph(v).complement().is_triangle_free()
 
     def fold_at(self, v):
@@ -796,7 +829,6 @@ class INPGraph(Graph):
     has_pendant_vertex._is_alpha_property = True
 
     def has_simplicial_vertex(self):
-        # TODO: Is it better to write this using any()?
         r"""
         Returns True if the graph has a simplicial vertex, that is, a vertex
         whose closed neighborhood forms a clique.
@@ -809,11 +841,14 @@ class INPGraph(Graph):
             sage: INPGraph(graphs.CompleteGraph(4)).has_simplicial_vertex()
             True
         """
-        for v in self.vertices():
-            if self.open_neighborhood_subgraph(v).is_clique():
-                return True
+        # for v in self.vertices():
+        #     if self.open_neighborhood_subgraph(v).is_clique():
+        #         return True
+        # return False
 
-        return False
+        # This any/imap version should be faster.
+        neighborhood_is_clique = lambda v: self.open_neighborhood_subgraph(v).is_clique()
+        return any(imap(neighborhood_is_clique, self.vertices()))
     has_simplicial_vertex._is_alpha_property = True
 
     @memoize_graphs
@@ -861,7 +896,6 @@ class INPGraph(Graph):
     def is_almost_KE(self):
         # TODO: Write tests
         # TODO: Write documentation
-        # TODO: Is it better to write this using any()?
         r"""
         EXAMPLES:
 
@@ -876,12 +910,16 @@ class INPGraph(Graph):
             True
 
         """
-        subsets = combinations_iterator(self.vertices(), self.order() - 1)
-        for subset in subsets:
-            if self.subgraph(subset).is_KE():
-                return True
+        # subsets = combinations_iterator(self.vertices(), self.order() - 1)
+        # for subset in subsets:
+        #     if self.subgraph(subset).is_KE():
+        #         return True
 
-        return False
+        # return False
+
+        # This any/imap version should be faster.
+        subgraph_is_KE = lambda s: self.subgraph(s).is_KE()
+        return any(imap(subgraph_is_KE, combinations_iterator(self.vertices(), self.order() - 1)))
     is_almost_KE._is_alpha_property = True
 
     def has_nonempty_KE_part(self):
