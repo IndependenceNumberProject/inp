@@ -403,7 +403,7 @@ class INPGraph(Graph):
                 elif sort_value in RR:
                     print_value = "{0:.3f}".format(float(sort_value))
                 else:
-                    print_value = "?"
+                    print_value = self._latex_escape(str(sort_value))
             except ValueError:
                 sort_value = -1
                 print_value = "$\\varnothing$"
@@ -435,7 +435,7 @@ class INPGraph(Graph):
                 elif sort_value in RR:
                     print_value = "{0:.3f}".format(float(sort_value))
                 else:
-                    print_value = "?"
+                    print_value = self._latex_escape(str(sort_value))
 
             except ValueError:
                 sort_value = sys.maxint
@@ -1005,9 +1005,8 @@ class INPGraph(Graph):
     average_degree_bound._is_lower_bound = True
 
     def caro_wei(self):
-        # TODO: Write more tests
-        # TODO: Write documentation
         r"""
+        Return the Caro-Wei lower bound.
 
         EXAMPLES:
 
@@ -1022,11 +1021,25 @@ class INPGraph(Graph):
         return sum([1/(1+Integer(d)) for d in self.degree()])
     caro_wei._is_lower_bound = True
 
+    def seklow(self):
+        # TODO: Write tests
+        r"""
+        Return Seklow's lower bound, which is an improvement on the Caro-Wei
+        bound.
+
+        """
+        coeff = lambda v: Integer(1)/(1 + self.degree(v))
+        return sum([coeff(v) * (1 + max([0, self.degree(v) * coeff(v) - \
+            sum([coeff(w) for w in self.neighbors(v)])])) for v in self.vertices()])
+    seklow._is_lower_bound = True
+
     def wilf(self):
         # TODO: Write tests
         # TODO: Write documentation
         n = Integer(self.order())
         max_eigenvalue = max(self.adjacency_matrix().eigenvalues())
+        if max_eigenvalue not in QQ:
+            max_eigenvalue = RR(max_eigenvalue)
         return n / (1 + max_eigenvalue)
     wilf._is_lower_bound = True
 
@@ -1346,5 +1359,5 @@ class INPGraph(Graph):
     cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
-    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, wilf, hansen_zheng_lower_bound, harant]
+    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
