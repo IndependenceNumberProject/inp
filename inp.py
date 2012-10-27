@@ -198,7 +198,7 @@ class INPGraph(Graph):
                     print "No difficult graphs found."
 
                 return None
-        
+
     @classmethod
     def next_difficult_graph(cls, order=None, verbose=True, save=False):
         # TODO: Is it possible to write good tests for this?
@@ -369,6 +369,11 @@ class INPGraph(Graph):
         # TODO: Write documentation
         # TODO: Is it possible to write good tests for this?
         # TODO: Check for tkz style files
+
+        if self.is_difficult():
+            difficult_text = "\\textbf{This graph is difficult!} & \\danger \\\\"
+        else:
+            difficult_text = ""
         
         # Generate the latex for the alpha properties table
         alphaproperties = {}
@@ -475,6 +480,7 @@ class INPGraph(Graph):
         opts.set_option('tkz_style', old_style)
 
         output = s.substitute(name=self._latex_escape(self.graph6_string()),
+                              difficult=difficult_text,
                               order=self.order(),
                               size=self.size(),
                               alpha=self.independence_number(),
@@ -1095,6 +1101,41 @@ class INPGraph(Graph):
         return max([len(even(v)) - eh(v) for v in self.vertices()])
     max_even_minus_even_horizontal._is_lower_bound = True
 
+    def max_odd_minus_odd_horizontal(self):
+        r"""
+        Compute `max\{o(v) - oh(v)}`, where `o(v)` is the number of vertices
+        at odd distance from vertex `v`, and `oh(v)` is the number of odd
+        horizontal edges with respect to `v`, that is, the number of edges `e`
+        where both endpoints of `e` are at odd distance from `v`.
+
+        EXAMPLES:
+
+        This isn't defined for disconnected graphs::
+            sage: INPGraph(2).max_odd_minus_odd_horizontal()
+            Traceback (most recent call last):
+              ...
+            ValueError: This bound is not defined for disconnected graphs.
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).max_odd_minus_odd_horizontal()
+            1
+            sage: INPGraph(graphs.PathGraph(3)).max_odd_minus_odd_horizontal()
+            2
+            sage: INPGraph.KillerGraph().max_odd_minus_odd_horizontal()
+            3
+            sage: INPGraph(graphs.CycleGraph(5)).max_odd_minus_odd_horizontal()
+            2
+        """
+        if not self.is_connected():
+            raise ValueError, "This bound is not defined for disconnected graphs."
+
+        dist = self.distance_all_pairs()
+        odd = lambda v: [w for w in self.vertices() if dist[v][w] % 2 == 1]
+        oh = lambda v: self.subgraph(odd(v)).size()
+
+        return max([len(odd(v)) - oh(v) for v in self.vertices()])
+    max_odd_minus_odd_horizontal._is_lower_bound = True    
+
     def five_fourteenths_lower_bound(self):
         # TODO: Write documentation
         # TODO: Write tests
@@ -1359,5 +1400,5 @@ class INPGraph(Graph):
     cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
-    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
+    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
