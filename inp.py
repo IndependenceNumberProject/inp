@@ -676,6 +676,27 @@ class INPGraph(Graph):
         # TODO: Write documentation
         return min(self.degree())
 
+    def stable_blocks(self):
+        # TODO: Write tests
+        r"""
+        Find all the stable blocks within the graph. A stable block is a set of
+        vertices `S \in V(G)` such that `\alpha(G[S]) + \alpha(G[S^\text{c}]) = \alpha(G)`.
+
+        NOTES:
+        This algorithm does not run in polynomial time.
+        """
+        blocks = []
+        alpha = self.independence_number()
+
+        for k in range(1, alpha + 1):
+            for S in combinations_iterator(self.vertices(), k):
+                if self.is_independent_set(S):
+                    X = self.closed_neighborhood_subgraph(S)
+                    if X.independence_number() == k:
+                        blocks.append(S)
+        return blocks
+
+
     def union_MCIS(self):
         r"""
         Return a union of maximum critical independent sets (MCIS).
