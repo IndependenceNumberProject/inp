@@ -677,10 +677,23 @@ class INPGraph(Graph):
         return min(self.degree())
 
     def stable_blocks(self):
-        # TODO: Write tests
         r"""
         Find all the stable blocks within the graph. A stable block is a set of
         vertices `S \in V(G)` such that `\alpha(G[S]) + \alpha(G[S^\text{c}]) = \alpha(G)`.
+
+        EXAMPLES:
+
+        Each vertex is its own stable block in a complete graph. ::
+            sage: INPGraph(graphs.CompleteGraph(4)).stable_blocks()
+            [[0], [1], [2], [3]]
+
+        All subsets are stable in an empty graph. ::
+            sage: INPGraph(3).stable_blocks()
+            [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2]]
+
+        ::
+            sage: INPGraph(graphs.CycleGraph(5)).stable_blocks()
+            [[0, 2], [0, 3], [1, 3], [1, 4], [2, 4]]
 
         NOTES:
         This algorithm does not run in polynomial time.
