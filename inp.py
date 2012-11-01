@@ -709,6 +709,60 @@ class INPGraph(Graph):
                         blocks.append(S)
         return blocks
 
+    def independent_sets(self):
+        r"""
+        Return a list of all independent sets in the graph.
+
+        NOTES:
+        This is a naive algorithm and does not run in polynomial time.
+        """
+        alpha = self.independence_number()
+        sets = [[]]
+        for k in range(1, alpha + 1):
+            for S in combinations_iterator(self.vertices(), k):
+                if self.is_independent_set(S):
+                    sets.append(S)
+        return sets
+
+    def critical_independent_sets(self):
+        r"""
+        Return a list of all critical independent sets in the graph.
+
+        NOTES:
+        This is a naive algorithm and does not run in polynomial time.
+        """
+        cis = {0: [[]]}
+        for I in self.independent_sets():
+            key = len(I) - len(self.open_neighborhood(I))
+            if key in cis:
+                cis[key].append(I)
+            else:
+                cis[key] = [I]
+        return cis[max(cis.keys())]
+    cis = critical_independent_sets
+
+    def critical_independence_number(self):
+        return max([len(I) for I in self.critical_independent_sets()])
+    alpha_c = critical_independence_number
+
+    def block_survey(self):
+        SB = self.stable_blocks()
+        CIS = self.critical_independent_sets()
+        IS = self.independent_sets()
+        alpha = self.independence_number()
+        alpha_c = self.critical_independence_number()
+
+        for I in IS:
+            output = str(I)
+            if I in SB:
+                output += " Stable"
+            if I in CIS:
+                output += " CIS"
+            if len(I) == alpha_c:
+                output += " MaxCIS"
+            if len(I) == alpha:
+                output += " Max"
+            print output
 
     def union_MCIS(self):
         r"""
