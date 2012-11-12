@@ -43,16 +43,11 @@ def get_strings(complexity):
 def eval_string(s, g):
     stack = []
     for op in s:
-        print "op =", op
-        print "stack =", stack
         if op in invariants:
-            print "\tinvariant: op(g) =", op(g)
             stack.append(op(g))
         elif op in unary_ops:
-            print "\tunary on", stack[-1:], "=", op(stack[-1:])
             stack[-1:] = [op(stack[-1:])]
         elif op in binary_commutative_ops or op in binary_noncommutative_ops:
-            print "\tbinary (", stack[-2:], ") = ", op(*stack[-2:])
             stack[-2:] = [op(*stack[-2:])]
     return stack.pop()
 
