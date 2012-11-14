@@ -1,5 +1,5 @@
 from operator import add, mul, sub
-from math import sqrt
+from math import floor, sqrt
 from inp import INPGraph
 
 #attach inp.py
@@ -22,21 +22,32 @@ def get_strings(complexity):
             for op in unary_ops:
                 new_strings += [s + [op]]
 
-        minus2 = get_strings(complexity - 2)
-        for a in minus2:
-            for b in minus2:
-                for op in binary_noncommutative_ops:
+        for i in range(1, complexity - 1):
+            strings_a = get_strings(i)
+            strings_b = get_strings(complexity - 1 - i)
+            for a in strings_a:
+                for b in strings_b:
+                    for op in binary_noncommutative_ops:
 
-                    # Skip subtracting something from itself
-                    if op == sub and a == b:
-                        continue
-                    
-                    new_strings += [a + b + [op]]
+                        if op == sub and a == b:
+                            continue
 
-        for i in range(len(minus2)):
-            for j in range(i, len(minus2)):
-                for op in binary_commutative_ops:
-                    new_strings += [minus2[i] + minus2[j] + [op]]
+                        new_strings += [a + b + [op]]
+
+        for k in range(1, ceil(float(complexity)/2)):
+            strings_a = get_strings(i)
+            if k == complexity - 1 - k:
+                for i, a in enumerate(strings_a):
+                    for b in strings_a[i:]:
+                        for op in binary_commutative_ops:
+                            new_strings += [a + b + [op]]
+            else:
+                strings_b = get_strings(complexity - 1 - k)
+                for a in strings_a:
+                    for b in strings_b:
+                        for op in binary_commutative_ops:
+                            new_strings += [a + b + [op]]
+
 
         return new_strings
 
