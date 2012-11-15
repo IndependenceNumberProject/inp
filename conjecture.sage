@@ -18,10 +18,16 @@ def get_strings(complexity):
     else:
         new_strings = []
 
+        # Apply a unary operator to strings of complexity-1, e.g.
+        # if we want strings of complexity 5, we can square root all the
+        # strings of complexity 4.
         for s in get_strings(complexity - 1):
             for op in unary_ops:
                 new_strings += [s + [op]]
 
+        # Apply binary noncommutative operators, if we want strings of
+        # complexity 5, we need to apply to strings of the following complexity
+        # combinations: 1,3  2,2  3,1
         for i in range(1, complexity - 1):
             strings_a = get_strings(i)
             strings_b = get_strings(complexity - 1 - i)
@@ -29,11 +35,15 @@ def get_strings(complexity):
                 for b in strings_b:
                     for op in binary_noncommutative_ops:
 
+                        # Skip subtracting something from itself
                         if op == sub and a == b:
                             continue
 
                         new_strings += [a + b + [op]]
 
+        # Apply binary commutative operators, since they are commutative we
+        # only need to check each combination of lower complexities once, e.g.
+        # for strings of complexity 6, we need to work on: 1,4  2,3
         for k in range(1, ceil(float(complexity)/2)):
             strings_a = get_strings(i)
             if k == complexity - 1 - k:
