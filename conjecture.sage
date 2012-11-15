@@ -57,7 +57,7 @@ def eval_string(s, g):
         if op in invariants:
             stack.append(op(g))
         elif op in unary_ops:
-            stack[-1:] = [op(stack[-1:])]
+            stack[-1] = [op(stack[-1])]
         elif op in binary_commutative_ops or op in binary_noncommutative_ops:
             stack[-2:] = [op(*stack[-2:])]
     return stack.pop()
