@@ -1064,7 +1064,6 @@ class INPGraph(Graph):
             Nb_minus_Na = set(self.neighbors(b)).difference(self.neighbors(a))
 
             # Check if completely linked
-            #if all(self.has_edge(u, v) for u, v in product(Na_minus_Nb, Nb_minus_Na)):
             if all(self.has_edge(u,v) for u in Na_minus_Nb for v in Nb_minus_Na):
                 return True
 
