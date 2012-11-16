@@ -1059,6 +1059,20 @@ class INPGraph(Graph):
     is_fold_reducible._is_alpha_property = True
 
     def has_magnet(self):
+        r"""
+        Return true if the graph contains a magnetically-attracted pair, that is,
+        adjacent vertices `a` and `b` such that `N(a) \setminus N(b)` is completely
+        linked to `N(b) \setminus N(a)`.
+        EXAMPLES:
+
+        The Petesen Graph does not contain magnets ::
+            sage: INPGraph(graphs.PetersenGraph()).has_magnet()
+            False
+
+        The killer does ::
+            sage: INPGraph.KillerGraph().has_magnet()
+            True
+        """
         for a, b in self.edge_iterator(labels=False):
             Na_minus_Nb = set(self.neighbors(a)).difference(self.neighbors(b))
             Nb_minus_Na = set(self.neighbors(b)).difference(self.neighbors(a))
