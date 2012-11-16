@@ -1058,6 +1058,21 @@ class INPGraph(Graph):
         return False
     is_fold_reducible._is_alpha_property = True
 
+    def has_magnet(self):
+        for a, b in self.edge_iterator(labels=False):
+            Na_minus_Nb = set(self.neighbors(a)).difference(self.neighbors(b))
+            Nb_minus_Na = set(self.neighbors(b)).difference(self.neighbors(a))
+
+            # Check if completely linked
+            #if all(self.has_edge(u, v) for u, v in product(Na_minus_Nb, Nb_minus_Na)):
+            if all(self.has_edge(u,v) for u in Na_minus_Nb for v in Nb_minus_Na):
+                return True
+
+        return False
+
+
+    has_magnet._is_alpha_property = True
+
     ###########################################################################
     # Lower bounds
     ###########################################################################
@@ -1487,6 +1502,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
     _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
