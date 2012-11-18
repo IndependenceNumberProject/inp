@@ -1183,7 +1183,7 @@ class INPGraph(Graph):
         # TODO: Write tests
         # TODO: Write documentation
         n = Integer(self.order())
-        max_eigenvalue = max(self.adjacency_matrix().eigenvalues())
+        max_eigenvalue = max(self.spectrum())
         if max_eigenvalue not in QQ:
             max_eigenvalue = RR(max_eigenvalue)
         return n / (1 + max_eigenvalue)
@@ -1465,7 +1465,7 @@ class INPGraph(Graph):
             sage: G.cvetkovic()
             4
         """
-        eigenvalues = self.adjacency_matrix().eigenvalues()
+        eigenvalues = self.spectrum()
         [positive, negative, zero] = [0, 0, 0]
         for e in eigenvalues:
             if e > 0:
