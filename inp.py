@@ -83,9 +83,7 @@ class INPGraph(Graph):
 
         if __has_progressbar:
             pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
-        else:
-            print "Testing..."
-
+        
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
         hits = 0
@@ -116,7 +114,9 @@ class INPGraph(Graph):
 
                 if __has_progressbar:
                     pbar.update(counter)
-                    sys.stdout.flush()
+                else:
+                    sys.stdout.write("Testing order {0}: {1}/{2} ({3:.2f}%)\r".format(order, counter, num_graphs_to_check, (float(counter)/num_graphs_to_check)*100))    
+                sys.stdout.flush()
 
             except StopIteration:
                 if __has_progressbar:
@@ -165,8 +165,6 @@ class INPGraph(Graph):
 
             if __has_progressbar:
                 pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
-            else:
-                print "Testing..."
 
         gen = graphs.nauty_geng("-cd3D{0} {1}".format(order-2, order))
         counter = 0
@@ -179,7 +177,7 @@ class INPGraph(Graph):
                     if verbose:
                         if __has_progressbar:
                             pbar.finish()
-                        print "Found a difficult graph: {0}".format(g.graph6_string())
+                        print "Found a difficult graph: {0} (Checked {1}/{2} graphs of order {3}.)".format(g.graph6_string(), counter, num_graphs_to_check, order)
 
                     if save:
                         g.save_files()
@@ -188,13 +186,20 @@ class INPGraph(Graph):
 
                 counter += 1
 
-                if verbose and __has_progressbar:
-                    pbar.update(counter)
+                if verbose:
+                    if __has_progressbar:
+                        pbar.update(counter)
+                    else:
+                        sys.stdout.write("Testing order {0}: {1}/{2} ({3:.2f}%)\r".format(order, counter, num_graphs_to_check, (float(counter)/num_graphs_to_check)*100))
                     sys.stdout.flush()
 
             except StopIteration:
-                if verbose and __has_progressbar:
-                    pbar.finish()
+                if verbose:
+                    if __has_progressbar:
+                        pbar.finish()
+                    else:
+                        print
+
                     print "No difficult graphs found."
 
                 return None
@@ -207,8 +212,11 @@ class INPGraph(Graph):
 
         INPUT:
 
-        - ``verbose`` - boolean -- Print progress to the console and save graph
-            information as a dossier PDF and a PNG image.
+        - ``order`` - int -- Begin checking for difficult graphs at the given order.
+
+        - ``verbose`` - boolean -- Print progress to the console.
+
+        - ``save`` - boolean -- Save a PDF and PNG image of the difficult graph that is found.
 
         NOTES:
 
@@ -676,7 +684,11 @@ class INPGraph(Graph):
         # TODO: Write documentation
         return min(self.degree())
 
-    def stable_blocks(self):
+    def is_stable_block(self, s):
+        return self.is_independent_set(s) and \
+            len(s) == self.closed_neighborhood_subgraph(s).independence_number()
+
+    def stable_blocks(self, trivial=True):
         r"""
         Find all the stable blocks within the graph. A stable block is a set of
         vertices `S \in V(G)` such that `\alpha(G[S]) + \alpha(G[S^\text{c}]) = \alpha(G)`.
@@ -685,29 +697,36 @@ class INPGraph(Graph):
 
         Each vertex is its own stable block in a complete graph. ::
             sage: INPGraph(graphs.CompleteGraph(4)).stable_blocks()
-            [[0], [1], [2], [3]]
+            [[], [0], [1], [2], [3]]
 
         All subsets are stable in an empty graph. ::
             sage: INPGraph(3).stable_blocks()
-            [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2]]
+            [[], [0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2]]
 
         ::
             sage: INPGraph(graphs.CycleGraph(5)).stable_blocks()
-            [[0, 2], [0, 3], [1, 3], [1, 4], [2, 4]]
+            [[], [0, 2], [0, 3], [1, 3], [1, 4], [2, 4]]
 
         NOTES:
         This algorithm does not run in polynomial time.
         """
-        blocks = []
-        alpha = self.independence_number()
+        # blocks = []
+        # alpha = self.independence_number()
+        # for k in range(1, alpha + 1):
+        #     for S in combinations_iterator(self.vertices(), k):
+        #         if self.is_independent_set(S):
+        #             X = self.closed_neighborhood_subgraph(S)
+        #             if X.independence_number() == k:
+        #                 blocks.append(S)
+        # return blocks
 
-        for k in range(1, alpha + 1):
-            for S in combinations_iterator(self.vertices(), k):
-                if self.is_independent_set(S):
-                    X = self.closed_neighborhood_subgraph(S)
-                    if X.independence_number() == k:
-                        blocks.append(S)
-        return blocks
+        if trivial:
+            stability = lambda s: len(s) == self.closed_neighborhood_subgraph(s).independence_number()
+        else:
+            alpha = self.independence_number()
+            stability = lambda s: len(s) > 0 and len(s) < alpha and len(s) == self.closed_neighborhood_subgraph(s).independence_number()
+
+        return filter(stability, self.independent_sets())
 
     def independent_sets(self):
         r"""
@@ -853,6 +872,9 @@ class INPGraph(Graph):
             sage: G.fold_at(0).graph6_string()
             'E?dw'
         """
+        if not self.has_foldable_vertex_at(v):
+            raise ValueError, "The graph is not foldable at vertex " + v
+
         g = self.copy()
         Nv = self.closed_neighborhood_subgraph(v)
         Nv_c = Nv.complement()
@@ -1062,7 +1084,9 @@ class INPGraph(Graph):
         r"""
         Return true if the graph contains a magnetically-attracted pair, that is,
         adjacent vertices `a` and `b` such that `N(a) \setminus N(b)` is completely
-        linked to `N(b) \setminus N(a)`.
+        linked to `N(b) \setminus N(a)`. This definition is stated in
+        Leveque-de Werra 2011.
+
         EXAMPLES:
 
         The Petesen Graph does not contain magnets ::
