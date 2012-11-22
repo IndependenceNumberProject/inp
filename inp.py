@@ -1479,7 +1479,6 @@ class INPGraph(Graph):
     cvetkovic._is_upper_bound = True
 
     def annihilation_number(self):
-        # TODO: Write more tests
         r"""
         Compute the annhilation number of the graph.
 
@@ -1488,16 +1487,15 @@ class INPGraph(Graph):
         ::
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.annihilation_number()
-            2
+            1
             sage: G = INPGraph(graphs.StarGraph(3))
             sage: G.annihilation_number()
-            4
+            3
         """
         seq = sorted(self.degree())
-        n = self.order()
 
-        a = 1
-        while sum(seq[:a]) <= sum(seq[a:]):
+        a = 0
+        while sum(seq[:a+1]) <= sum(seq[a+1:]):
             a += 1
 
         return a
