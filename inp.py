@@ -761,7 +761,7 @@ class INPGraph(Graph):
     cis = critical_independent_sets
 
     def critical_independence_number(self):
-        return max([len(I) for I in self.critical_independent_sets()])
+        return max(len(I) for I in self.critical_independent_sets())
     alpha_c = critical_independence_number
 
     def block_survey(self):
@@ -873,7 +873,7 @@ class INPGraph(Graph):
             'E?dw'
         """
         if not self.has_foldable_vertex_at(v):
-            raise ValueError, "The graph is not foldable at vertex " + v
+            raise ValueError, "The graph is not foldable at vertex " + str(v)
 
         g = self.copy()
         Nv = self.closed_neighborhood_subgraph(v)
@@ -882,8 +882,8 @@ class INPGraph(Graph):
 
         for (i,j) in Nv_c.edge_iterator(labels=False):
             g.add_vertex((i,j))
-            g.add_edges([[(i,j), w] for w in self.open_neighborhood([i, j])])
-            g.add_edges([[(i,j), w] for w in new_nodes])
+            g.add_edges([(i,j), w] for w in self.open_neighborhood([i, j]))
+            g.add_edges([(i,j), w] for w in new_nodes)
             new_nodes += [(i,j)]
 
         g.delete_vertices(Nv.vertices())
@@ -1175,8 +1175,8 @@ class INPGraph(Graph):
 
         """
         coeff = lambda v: Integer(1)/(1 + self.degree(v))
-        return sum([coeff(v) * (1 + max([0, self.degree(v) * coeff(v) - \
-            sum([coeff(w) for w in self.neighbors(v)])])) for v in self.vertices()])
+        return sum(coeff(v) * (1 + max(0, self.degree(v) * coeff(v) - \
+            sum(coeff(w) for w in self.neighbors(v)))) for v in self.vertices())
     seklow._is_lower_bound = True
 
     def wilf(self):
@@ -1238,7 +1238,7 @@ class INPGraph(Graph):
         even = lambda v: [w for w in self.vertices() if dist[v][w] % 2 == 0]
         eh = lambda v: self.subgraph(even(v)).size()
 
-        return max([len(even(v)) - eh(v) for v in self.vertices()])
+        return max(len(even(v)) - eh(v) for v in self.vertices())
     max_even_minus_even_horizontal._is_lower_bound = True
 
     def max_odd_minus_odd_horizontal(self):
@@ -1273,7 +1273,7 @@ class INPGraph(Graph):
         odd = lambda v: [w for w in self.vertices() if dist[v][w] % 2 == 1]
         oh = lambda v: self.subgraph(odd(v)).size()
 
-        return max([len(odd(v)) - oh(v) for v in self.vertices()])
+        return max(len(odd(v)) - oh(v) for v in self.vertices())
     max_odd_minus_odd_horizontal._is_lower_bound = True    
 
     def five_fourteenths_lower_bound(self):
