@@ -250,6 +250,71 @@ class INPGraph(Graph):
                     print "\nStopped."
                 return None
 
+    @classmethod
+    def find_example(cls, func, order=1, verbose=True):
+        r"""
+        Returns the first connected graph that satisfies the given function.
+        """
+        if not is_package_installed("nauty"): 
+            raise TypeError, "The nauty package is required to find difficult graphs."
+
+        while True:
+            try:
+                output = subprocess.check_output(["{0}/local/bin/nauty-geng".format(SAGE_ROOT),
+                         "-cu", str(order)], stderr=subprocess.STDOUT)
+                m = cls._nauty_count_pattern.search(output)
+                num_graphs_to_check = int(m.group(1))
+        
+                if verbose:
+                    sys.stdout.write("Counting graphs of order {0}... ".format(order))
+                    sys.stdout.flush()
+                    print num_graphs_to_check
+
+                    if __has_progressbar:
+                        pbar = ProgressBar(widgets=["Testing: ", Counter(), Bar(), ETA()], maxval=num_graphs_to_check, fd=sys.stdout).start()
+
+                gen = graphs.nauty_geng("-c {0}".format(order))
+                counter = 0
+
+                while True:
+                    try:
+                        g = INPGraph(gen.next())
+                        
+                        if func(g):
+                            if verbose:
+                                if __has_progressbar:
+                                    pbar.finish()
+                                print "Found an example graph: {0} (Checked {1}/{2} graphs of order {3}.)".format(g.graph6_string(), counter, num_graphs_to_check, order)
+
+                            return g
+
+                        counter += 1
+
+                        if verbose:
+                            if __has_progressbar:
+                                pbar.update(counter)
+                            else:
+                                sys.stdout.write("Testing order {0}: {1}/{2} ({3:.2f}%)\r".format(order, counter, num_graphs_to_check, (float(counter)/num_graphs_to_check)*100))
+                            sys.stdout.flush()
+
+                    except StopIteration:
+                        if verbose:
+                            if __has_progressbar:
+                                pbar.finish()
+                            else:
+                                print
+                            print "No example graphs found."
+                        
+                        order += 1
+                        break
+
+            except KeyboardInterrupt:
+                if verbose:
+                    sys.stdout.flush()
+                    print "\nStopped."
+                return None
+
+
     def is_difficult(self):
         # TODO: Is it possible to write good tests for this?
         r"""
