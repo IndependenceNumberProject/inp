@@ -1285,6 +1285,39 @@ class INPGraph(Graph):
         return 5 * self.order() / Integer(14)
     five_fourteenths_lower_bound._is_lower_bound = True
 
+    def angel_campigotto_laforest(self):
+        # TODO: Write tests
+        r"""
+        Compute the lower bound given in Angel-Campigotto-Laforest 2012.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).angel_campigotto_laforest()
+            1
+            sage: INPGraph(graphs.StarGraph(3)).angel_campigotto_laforest()
+            8/3
+        """
+        n = self.order()
+        c = len(self.connected_components())
+        d = lambda u: self.degree(u)
+
+
+        expected_size = n - sum(Integer(1)/(d(u) + 1) for u in self.vertices())
+
+        if expected_size == (n - c):
+            return c
+        else:
+            d_uv = lambda u, v: Integer(len(set(self.neighbors(u)).intersection(self.neighbors(v))))
+
+            variance = sum(Integer(d(u))/((d(u) + 1)**2) for u in self.vertices()) - \
+                       2 * sum(Integer(1)/((d(u)+1)*(d(v)+1)) for u, v in self.edge_iterator(labels=False)) + \
+                       2 * sum(d_uv(u,v)/((d(u)+1)*(d(v)+1)*(2+d(u)+d(v)-d_uv(u,v))) for u, v in self.complement().edge_iterator(labels=False))
+            
+            return n - (expected_size - variance/(n - c - expected_size))
+
+    angel_campigotto_laforest._is_lower_bound = True
+
     ###########################################################################
     # Upper bounds
     ###########################################################################
@@ -1538,5 +1571,5 @@ class INPGraph(Graph):
     cut_vertices_bound._is_upper_bound = True
 
     _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
-    _lower_bounds = [Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
+    _lower_bounds = [angel_campigotto_laforest, Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
