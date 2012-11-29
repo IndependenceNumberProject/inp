@@ -1350,6 +1350,10 @@ class INPGraph(Graph):
         return 5 * self.order() / Integer(14)
     five_fourteenths_lower_bound._is_lower_bound = True
 
+    def szekeres_wilf(self):
+        pass
+
+
     def angel_campigotto_laforest(self):
         # TODO: Write tests
         r"""
