@@ -1,6 +1,7 @@
 import sys
 sys.path.append(".") # Needed to pass automated testing.
 
+import collections
 import operator
 import math
 from functools import wraps
@@ -8,9 +9,8 @@ from inp import INPGraph
 from sage.all import *
 
 class GraphBrain(SageObject):
-    _complexity_limit = 5
-    _graph_db = [INPGraph(graphs.CompleteGraph(3)), INPGraph(graphs.ClawGraph()), \
-                 INPGraph.KillerGraph(), INPGraph(graphs.CycleGraph(5)), INPGraph(graphs.PetersenGraph())]
+    _complexity_limit = 6
+    _graph_db = [INPGraph(graphs.CompleteGraph(3)), INPGraph.KillerGraph(), INPGraph(graphs.CompleteGraph(5))]
 
     def __init__(self):
         pass
@@ -23,40 +23,85 @@ class GraphBrain(SageObject):
 
     @classmethod
     def conjecture(cls, comparator, invariant):
+        """
+        Return a list of true statements that are also significant for at least
+        one graph in the database.
+        """
         rhs = GraphExpression([invariant])
 
         expressions = []
         for c in range(1, cls._complexity_limit + 1):
             expressions += GraphExpression.all_expressions(c, without=invariant)
 
-        # print expressions
+        # statements = map(lambda x: GraphStatement(x, comparator, rhs), expressions)
+        statements = [GraphStatement(x, comparator, rhs) for x in expressions]
+        # #print statements
+        # # true_statements = [s for s in statements if all(s.evaluate(g) for g in cls._graph_db)]
+        # # print "True: ", true_statements
+        # data = [(s, g, s.lhs.evaluate(g)) for s in statements for g in cls._graph_db if s.evaluate(g)]
+        # print data
+        # conjectures = []
 
-        statements = map(lambda x: GraphStatement(x, comparator, rhs), expressions)
-        # print statements
+        conjectures = {}
 
-        conjectures = []
+        for s in statements:
+            if not all(s.evaluate(g) for g in cls._graph_db):
+                continue
 
-        for g in cls._graph_db:
-            true_statements = filter(lambda s: s.evaluate(g), statements)
+            for g in cls._graph_db:
 
-            if comparator == operator.lt or comparator == operator.le:
-                # bin the statements by their max evaluation
-                # return all the statements in the biggest bin
-                # print map(lambda s: (s.lhs.evaluate(g), s), true_statements)
-                
-                evaluated = map(lambda s: (s.lhs.evaluate(g), s), true_statements)
-                best = max(evaluated, key=operator.itemgetter(0))[0]
-                conjectures += map(operator.itemgetter(1), filter(lambda s: s[0] == best, evaluated))
-            elif comparator == operator.gt or comparator == operator.ge:
-                # bin the statements by their min evaluation
-                # return all the statements in smallest bin
-                evaluated = map(lambda s: (s.lhs.evaluate(g), s), true_statements)
-                best = min(evaluated, key=operator.itemgetter(0))[0]
-                conjectures += filter(lambda s: s[0] == best, evaluated)
-            else:
-                conjectures += true_statements
+                bound = s.lhs.evaluate(g)
 
-        return list(set(conjectures))
+                # print s, g, bound
+
+                gid = id(g)
+
+                if gid in conjectures:
+
+                    if s.comparator in [operator.le, operator.lt]:
+                        
+                        if bound > conjectures[gid]['bound']:
+                            conjectures[gid]  = {'bound': bound, 'complexity': s.lhs.complexity(), 'graph': g, 'statements': [s]}
+                        elif bound == conjectures[gid]['bound']:
+
+                            if s.lhs.complexity() < conjectures[gid]['complexity']:
+                                conjectures[gid]  = {'bound': bound, 'complexity': s.lhs.complexity(), 'graph': g, 'statements': [s]}
+                            elif s.lhs.complexity() == conjectures[gid]['complexity']:
+                                conjectures[gid]['statements'].append(s)
+
+                    elif s.comparator in [operator.ge, operator.gt]:
+
+                        if bound < conjectures[gid]['bound']:
+                            conjectures[gid]  = {'bound': bound, 'complexity': s.lhs.complexity(), 'graph': g, 'statements': [s]}
+                        elif bound == conjectures[gid]['bound']:
+
+                            if s.lhs.complexity() < conjectures[gid]['complexity']:
+                                conjectures[gid]  = {'bound': bound, 'complexity': s.lhs.complexity(), 'graph': g, 'statements': [s]}
+                            elif s.lhs.complexity() == conjectures[gid]['complexity']:
+                                conjectures[gid]['statements'].append(s)
+
+                    else:
+
+                        conjectures[gid]['statements'].append(s)
+
+                else:
+
+                    conjectures[gid]  = {
+                        'bound': bound,
+                        'complexity': s.lhs.complexity(),
+                        'graph': g,
+                        'statements': [s]
+                    }
+
+        for key, data in conjectures.iteritems():
+            print data['graph']
+
+            for s in data['statements']:
+                print "\t", s
+
+            print
+
+        # return conjectures
 
 class GraphStatement(SageObject):
     _latex_dict = {
@@ -100,7 +145,7 @@ class GraphStatement(SageObject):
         r"""
         Returns the string representation of the statement.
         """
-        return "Graph statement: {0} {1} {2}".format(self.lhs, self._repr_dict[self.comparator], self.rhs)
+        return "{0} {1} {2}".format(self.lhs, self._repr_dict[self.comparator], self.rhs)
 
     def _latex_(self):
         r"""
@@ -109,9 +154,13 @@ class GraphStatement(SageObject):
         return "{0} {1} {2}".format(latex(self.lhs), self._latex_dict[self.comparator], latex(self.rhs))
 
     def evaluate(self, g):
+        """
+        Compares the evaluation of the LHS to the evaluation of the RHS. Returns True or False.
+        """
         try:
             return self.comparator(self.lhs.evaluate(g), self.rhs.evaluate(g))
-        except (ValueError, ZeroDivisionError):
+        except (ValueError, ZeroDivisionError, OverflowError) as e:
+            #print "{0} thrown for {1}".format(e, self)
             return False
 
 class GraphExpression(SageObject):
@@ -122,7 +171,7 @@ class GraphExpression(SageObject):
     reciprocal = lambda x: operator.truediv(1, x)
 
     _graph_invariants = [INPGraph.alpha, INPGraph.min_degree]
-    _unary_operators = [math.sqrt, increment]
+    _unary_operators = [math.sqrt]
     _binary_commutative_operators = [operator.add, operator.mul]
     _binary_noncommutative_operators = [operator.sub, operator.truediv, operator.pow]
 
@@ -258,6 +307,12 @@ class GraphExpression(SageObject):
         """
         return GraphExpression(self._stack + li)
 
+    def complexity(self):
+        """
+        Return the complexity of the expression, i.e. the length of the stack.
+        """
+        return len(self._stack)
+
     def evaluate(self, g):
         r"""
         Evaluate the expression for the given graph.
@@ -287,6 +342,9 @@ class GraphExpression(SageObject):
 
     @classmethod
     def all_expressions(cls, complexity, without=None):
+        """
+        Generate all expressions of a given complexity.
+        """
         if complexity < 1:
             return GraphExpression([])
         elif complexity == 1:
