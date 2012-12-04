@@ -286,6 +286,7 @@ class INPGraph(Graph):
                                     pbar.finish()
                                 print "Found an example graph: {0} (Checked {1}/{2} graphs of order {3}.)".format(g.graph6_string(), counter, num_graphs_to_check, order)
 
+                            g.show()
                             return g
 
                         counter += 1
@@ -815,7 +816,7 @@ class INPGraph(Graph):
         NOTES:
         This is a naive algorithm and does not run in polynomial time.
         """
-        cis = {0: [[]]}
+        cis = {}
         for I in self.independent_sets():
             key = len(I) - len(self.open_neighborhood(I))
             if key in cis:
