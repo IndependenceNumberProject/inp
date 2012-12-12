@@ -29,6 +29,7 @@ import re
 import subprocess
 import sys
 import time
+import warnings
 
 from sage.graphs.graph import Graph
 from sage.graphs.graph_generators import graphs
@@ -37,7 +38,7 @@ from sage.rings.rational import Rational
 from sage.functions.other import floor, ceil, sqrt
 from sage.numerical.mip import MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
-from sage.version import version
+import sage.version
 from sage.combinat.combinat import combinations_iterator
 
 # TODO: Include more functions from survey
@@ -256,7 +257,7 @@ class INPGraph(Graph):
         Returns the first connected graph that satisfies the given function.
         """
         if not is_package_installed("nauty"): 
-            raise TypeError, "The nauty package is required to find difficult graphs."
+            raise TypeError, "The nauty package is required to find graphs."
 
         while True:
             try:
@@ -635,10 +636,10 @@ class INPGraph(Graph):
         in Sage 5.2 that returns double this number. Calling this on an
         edge-weighted graph will NOT give the usual matching number.
         """
-        if float(version) < 5.3:
-            return int(self.matching(value_only=True))
-        else:
-            return int(self.matching(value_only=True, use_edge_labels=False))
+        if float(sage.verison.version) < 5.3:
+            warnings.warn("A bug in Sage versions < 5.3 may return an incorrect matching number.")
+
+        return int(self.matching(value_only=True, use_edge_labels=False))
 
     mu = matching_number
 
@@ -1172,8 +1173,6 @@ class INPGraph(Graph):
                 return True
 
         return False
-
-
     has_magnet._is_alpha_property = True
 
     ###########################################################################
