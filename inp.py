@@ -843,8 +843,8 @@ class INPGraph(Graph):
                 output += " Stable"
             if I in CIS:
                 output += " CIS"
-            if len(I) == alpha_c:
-                output += " MaxCIS"
+                if len(I) == alpha_c:
+                    output += " MaxCIS"
             if len(I) == alpha:
                 output += " Max"
             print output
