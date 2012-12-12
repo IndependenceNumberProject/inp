@@ -1230,7 +1230,7 @@ class INPGraph(Graph):
             sage: G.caro_wei()
             4/3
         """
-        return sum([1/(1+Integer(d)) for d in self.degree()])
+        return sum(1/(1+Integer(d)) for d in self.degree())
     caro_wei._is_lower_bound = True
 
     def seklow(self):
@@ -1370,7 +1370,7 @@ class INPGraph(Graph):
         """
         n = self.order()
         c = len(self.connected_components())
-        d = lambda u: self.degree(u)
+        d = lambda u: Integer(self.degree(u))
 
 
         expected_size = n - sum(Integer(1)/(d(u) + 1) for u in self.vertices())
@@ -1380,8 +1380,8 @@ class INPGraph(Graph):
         else:
             d_uv = lambda u, v: Integer(len(set(self.neighbors(u)).intersection(self.neighbors(v))))
 
-            variance = sum(Integer(d(u))/((d(u) + 1)**2) for u in self.vertices()) - \
-                       2 * sum(Integer(1)/((d(u)+1)*(d(v)+1)) for u, v in self.edge_iterator(labels=False)) + \
+            variance = sum(d(u)/((d(u) + 1)**2) for u in self.vertices()) - \
+                       2 * sum(1/((d(u)+1)*(d(v)+1)) for u, v in self.edge_iterator(labels=False)) + \
                        2 * sum(d_uv(u,v)/((d(u)+1)*(d(v)+1)*(2+d(u)+d(v)-d_uv(u,v))) for u, v in self.complement().edge_iterator(labels=False))
             
             return n - (expected_size - variance/(n - c - expected_size))
@@ -1423,7 +1423,7 @@ class INPGraph(Graph):
         """
         p = MixedIntegerLinearProgram(maximization=True)
         x = p.new_variable()
-        p.set_objective(sum([x[v] for v in self.vertices()]))
+        p.set_objective(sum(x[v] for v in self.vertices()))
 
         for v in self.vertices():
             p.add_constraint(x[v], max=1)
