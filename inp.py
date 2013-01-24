@@ -609,6 +609,22 @@ class INPGraph(Graph):
     def ChairGraph(cls):
         return cls('DiC')
 
+    @classmethod
+    def CoChairGraph(cls):
+        return cls('Dhw')
+
+    @classmethod
+    def PGraph(cls):
+        return cls('Dl_')
+
+    @classmethod
+    def CoPGraph(cls):
+        return cls('Dho')
+
+    @classmethod
+    def GemGraph(cls):
+        return cls('Dh{')
+
     @memoize_graphs
     def matching_number(self):
         r"""
@@ -979,7 +995,7 @@ class INPGraph(Graph):
 
     def is_chair_free(self):
         r"""
-        Returns true if the graph is chair-free, that is, it doesn not contain
+        Returns true if the graph is chair-free, that is, it does not contain
         any induced copies of the chair.
 
         EXAMPLES:
@@ -995,27 +1011,31 @@ class INPGraph(Graph):
         return self.subgraph_search(INPGraph.ChairGraph(), induced=True) is None
 
     def is_co_chair_free(self):
-        pass
+        return self.subgraph_search(INPGraph.CoChairGraph(), induced=True) is None
 
     def is_p5_free(self):
-        pass
+        return self.subgraph_search(graphs.PathGraph(5), induced=True) is None
     is_co_house_free = is_p5_free
 
     def is_house_free(self):
-        pass
+        return self.subgraph_search(graphs.HouseGraph(), induced=True) is None
     is_co_p5_free = is_house_free
 
     def is_p_free(self):
-        pass
+        return self.subgraph_search(INPGraph.PGraph(), induced=True) is None
 
     def is_co_p_free(self):
-        pass
+        return self.subgraph_search(INPGraph.CoPGraph(), induced=True) is None
 
     def is_gem_free(self):
-        pass
+        return self.subgraph_search(INPGraph.GemGraph(), induced=True) is None
 
     def is_co_gem_free(self):
-        pass
+        return self.subgraph_search(graphs.PathGraph(4), induced=True) is None
+    is_p4_free = is_co_gem_free
+
+    def is_diamond_free(self):
+        return self.subgraph_search(graphs.DiamondGraph(), induced=True) is None
 
     ###########################################################################
     # Alpha properties
