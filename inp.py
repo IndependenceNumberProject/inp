@@ -605,6 +605,10 @@ class INPGraph(Graph):
     def KillerGraph(cls):
         return cls('EXCO')
 
+    @classmethod
+    def ChairGraph(cls):
+        return cls('DiC')
+
     @memoize_graphs
     def matching_number(self):
         r"""
@@ -958,14 +962,12 @@ class INPGraph(Graph):
 
     def is_bull_free(self):
         r"""
-        Returns true is the graph is bull-free, that is, it does not contain
+        Returns true if the graph is bull-free, that is, it does not contain
         any induced copies of the bull (a triangle with two pendants).
 
         EXAMPLES:
 
         ::
-            sage: INPGraph(graphs.CompleteGraph(3)).is_bull_free()
-            True
             sage: INPGraph(graphs.BullGraph()).is_bull_free()
             False
             sage: INPGraph('DyK').is_bull_free()
@@ -976,7 +978,21 @@ class INPGraph(Graph):
         return self.subgraph_search(graphs.BullGraph(), induced=True) is None
 
     def is_chair_free(self):
-        pass
+        r"""
+        Returns true if the graph is chair-free, that is, it doesn not contain
+        any induced copies of the chair.
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph.ChairGraph().is_chair_free()
+            False
+            sage: INPGraph('Dic').is_chair_free()
+            True
+            sage: INPGraph('EiEG').is_chair_free()
+            False
+        """
+        return self.subgraph_search(INPGraph.ChairGraph(), induced=True) is None
 
     def is_co_chair_free(self):
         pass
