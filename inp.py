@@ -636,7 +636,7 @@ class INPGraph(Graph):
         in Sage 5.2 that returns double this number. Calling this on an
         edge-weighted graph will NOT give the usual matching number.
         """
-        if float(sage.verison.version) < 5.3:
+        if float(sage.version.version) < 5.3:
             warnings.warn("A bug in Sage versions < 5.3 may return an incorrect matching number.")
 
         return int(self.matching(value_only=True, use_edge_labels=False))
@@ -955,6 +955,51 @@ class INPGraph(Graph):
 
         g.delete_vertices(Nv.vertices())
         return g
+
+    def is_bull_free(self):
+        r"""
+        Returns true is the graph is bull-free, that is, it does not contain
+        any induced copies of the bull (a triangle with two pendants).
+
+        EXAMPLES:
+
+        ::
+            sage: INPGraph(graphs.CompleteGraph(3)).is_bull_free()
+            True
+            sage: INPGraph(graphs.BullGraph()).is_bull_free()
+            False
+            sage: INPGraph('DyK').is_bull_free()
+            True
+            sage: INPGraph('EyGW').is_bull_free()
+            False
+        """
+        return self.subgraph_search(graphs.BullGraph(), induced=True) is None
+
+    def is_chair_free(self):
+        pass
+
+    def is_co_chair_free(self):
+        pass
+
+    def is_p5_free(self):
+        pass
+    is_co_house_free = is_p5_free
+
+    def is_house_free(self):
+        pass
+    is_co_p5_free = is_house_free
+
+    def is_p_free(self):
+        pass
+
+    def is_co_p_free(self):
+        pass
+
+    def is_gem_free(self):
+        pass
+
+    def is_co_gem_free(self):
+        pass
 
     ###########################################################################
     # Alpha properties
