@@ -1030,9 +1030,9 @@ class INPGraph(Graph):
     def is_gem_free(self):
         return self.subgraph_search(INPGraph.GemGraph(), induced=True) is None
 
-    def is_co_gem_free(self):
+    def is_p4_free(self):
         return self.subgraph_search(graphs.PathGraph(4), induced=True) is None
-    is_p4_free = is_co_gem_free
+    is_co_gem_free = is_p4_free
 
     def is_diamond_free(self):
         return self.subgraph_search(graphs.DiamondGraph(), induced=True) is None
