@@ -1349,7 +1349,7 @@ class INPGraph(Graph):
         n = Integer(self.order())
         e = Integer(self.size())
         term = 2 * e + n + 1
-        return (1/2) * (term - sqrt(term^2 - 4*n^2))
+        return 0.5 * (term - sqrt(term**2 - 4*n**2))
     harant._is_lower_bound = True
 
     def max_even_minus_even_horizontal(self):
