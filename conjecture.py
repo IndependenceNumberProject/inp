@@ -12,12 +12,13 @@ class GraphBrain(SageObject):
     _default_binary_commutative_operators = [operator.add]
     _default_binary_noncommutative_operators = [operator.sub]
 
-    def __init__(self, name=None, target=None, graphs=[], complexity=1,
+    def __init__(self, name=None, comparator=None, target=None, graphs=[], complexity=1,
                  graph_invariants=_default_graph_invariants,
                  unary_operators=_default_unary_operators,
                  binary_commutative_operators=_default_binary_commutative_operators,
                  binary_noncommutative_operators=_default_binary_noncommutative_operators):
         self.name = name
+        self.comparator = comparator
         self.target = target
         self.graphs = graphs
         self.complexity = complexity
@@ -25,6 +26,9 @@ class GraphBrain(SageObject):
         self.unary_operators = unary_operators
         self.binary_commutative_operators = binary_commutative_operators
         self.binary_noncommutative_operators = binary_noncommutative_operators
+
+    def conjecture(self):
+        pass
 
     def expressions(self, complexity, _cache=None):
         r"""
@@ -63,9 +67,7 @@ class GraphBrain(SageObject):
                 # Unary operators
                 for expr in self.expressions(complexity - 1, _cache):
                     for op in self.unary_operators:
-                        copy = expr.copy()
-                        copy.append(op)
-                        _cache[complexity] += [copy]
+                        _cache[complexity] += [expr.operate(op)]
 
                 # Binary operators
                 for k in range(1, complexity - 1):
@@ -73,18 +75,12 @@ class GraphBrain(SageObject):
                         for b in self.expressions(complexity - 1 - k, _cache):
                             # Noncommutative
                             for op in self.binary_noncommutative_operators:
-                                copy = a.copy()
-                                copy.extend(b.rpn_stack[:])
-                                copy.append(op)
-                                _cache[complexity] += [copy]
+                                _cache[complexity] += [a.operate(op, b)]
 
                             # Commutative
                             if k <= complexity - 1 - k:
                                 for op in self.binary_commutative_operators:
-                                    copy = a.copy()
-                                    copy.extend(b.rpn_stack[:])
-                                    copy.append(op)
-                                    _cache[complexity] += [copy]
+                                    _cache[complexity] += [a.operate(op, b)]
 
         return _cache[complexity]
         
@@ -107,6 +103,12 @@ class GraphExpression(SageObject):
 
     def copy(self):
         return GraphExpression(self.brain, self.rpn_stack[:])
+
+    def operate(self, op, expr=None):
+        copy = self.copy()
+        if expr is not None: copy.extend(expr.rpn_stack[:])
+        copy.append(op)
+        return copy
 
     def append(self, x):
         r"""
