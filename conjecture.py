@@ -67,7 +67,7 @@ class GraphBrain(SageObject):
                 # Unary operators
                 for expr in self.expressions(complexity - 1, _cache):
                     for op in self.unary_operators:
-                        _cache[complexity] += [expr.operate(op)]
+                        _cache[complexity].append(expr.operate(op))
 
                 # Binary operators
                 for k in range(1, complexity - 1):
@@ -75,12 +75,12 @@ class GraphBrain(SageObject):
                         for b in self.expressions(complexity - 1 - k, _cache):
                             # Noncommutative
                             for op in self.binary_noncommutative_operators:
-                                _cache[complexity] += [a.operate(op, b)]
+                                _cache[complexity].append(a.operate(op, b))
 
                             # Commutative
                             if k <= complexity - 1 - k:
                                 for op in self.binary_commutative_operators:
-                                    _cache[complexity] += [a.operate(op, b)]
+                                    _cache[complexity].append(a.operate(op, b))
 
         return _cache[complexity]
         
