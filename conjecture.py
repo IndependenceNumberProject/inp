@@ -7,10 +7,16 @@ import itertools
 import operator
 
 class GraphBrain(SageObject):
-    _default_graph_invariants = [Graph.diameter, Graph.radius]
+    _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
+                                 INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
+                                 Graph.wiener_index, INPGraph.residue, INPGraph.fractional_alpha,
+                                 INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
+                                 INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
     _default_unary_operators = [sqrt]
-    _default_binary_commutative_operators = [operator.add]
-    _default_binary_noncommutative_operators = [operator.sub]
+    _default_binary_commutative_operators = [operator.add, operator.mul]
+    _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
+
+    _save_path = os.path.expanduser("~/Dropbox/INP")
 
     def __init__(self, name=None, comparator=None, target=None, graphs=[], complexity=1,
                  graph_invariants=_default_graph_invariants,
@@ -20,7 +26,12 @@ class GraphBrain(SageObject):
         self.name = name
         self.comparator = comparator
         self.target = target
-        self.graphs = graphs
+
+        if not all(isinstance(g, INPGraph) for g in graphs):
+            raise TypeError("Graphs must be INPGraph objects.")
+        else:
+            self.graphs = graphs
+
         self.complexity = complexity
         self.graph_invariants = graph_invariants
         self.unary_operators = unary_operators
@@ -28,11 +39,54 @@ class GraphBrain(SageObject):
         self.binary_noncommutative_operators = binary_noncommutative_operators
 
     def conjecture(self):
-        pass
-
-    def expressions(self, complexity, _cache=None):
         r"""
-        Return all possible expressions of the given complexity.
+        Return a list of true statements that are also significant for at least
+        one graph in the brain, that is, the statement gives the tightest bound.
+        """
+        conjectures = {}
+        targets = {id(g): self.target(g) for g in self.graphs}
+        #print targets
+
+        while not conjectures:
+            
+            print "Checking expressions of complexity", self.complexity, "..."
+
+            for expr in self.expressions():
+                #print expr
+                
+                try:
+                    if not all(self.comparator(expr.evaluate(g), targets[id(g)]) for g in self.graphs):
+                        continue
+                except (TypeError, ValueError) as e:
+                    #print "Unable to evaluate", expr, ":", e
+                    continue
+
+                for g in self.graphs:
+                    gid = g.graph6_string()
+
+                    try:
+                        evaluation = expr.evaluate(g)
+                    except (TypeError, ValueError) as e:
+                        #print "Unable to evaluate", expr, "for graph", g.graph6_string(), ":", e
+                        break
+
+                    #print "\t", g, evaluation
+       
+                    if gid in conjectures and evaluation == conjectures[gid]['value']:
+                        conjectures[gid]['expressions'].append(expr)
+                    elif gid not in conjectures or not self.comparator(evaluation, conjectures[gid]['value']):
+                        conjectures[gid] = {'value': evaluation, 'expressions': [expr]}
+
+            if not conjectures:
+                self.complexity += 1
+
+        print conjectures
+
+
+    def expressions(self, complexity=None, _cache=None):
+        r"""
+        Return all possible expressions of the given complexity. If complexity
+        is not specified, then use the brain's current complexity level.
 
         EXAMPLES:
 
@@ -53,6 +107,9 @@ class GraphBrain(SageObject):
             sage: brain.expressions(3)
             [diameter(G)^(1/4), radius(G)^(1/4), 0, 2*diameter(G), radius(G) - diameter(G), radius(G) + diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 0, 2*radius(G)]
         """
+        if complexity is None:
+            complexity = self.complexity
+
         if _cache is None:
             _cache = {}
 
