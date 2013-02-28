@@ -1522,25 +1522,21 @@ class INPGraph(Graph):
         EXAMPLES:
 
         For an empty graph `G`, `\vartheta(G) = n`::
-
             sage: G = INPGraph(2)
             sage: G.lovasz_theta()
             2.0
 
         For a complete graph `G`, `\vartheta(G) = 1`::
-
             sage: G = INPGraph(graphs.CompleteGraph(3))
             sage: G.lovasz_theta()
             1.0
 
         For a pentagon (five-cycle) graph `G`, `\vartheta(G) = \sqrt{5}`::
-
             sage: G = INPGraph(graphs.CycleGraph(5))
             sage: G.lovasz_theta()
             2.236
 
         For the Petersen graph `G`, `\vartheta(G) = 4`::
-
             sage: G = INPGraph(graphs.PetersenGraph())
             sage: G.lovasz_theta()
             4.0
