@@ -52,17 +52,21 @@ class GraphBrain(SageObject):
             print "Checking expressions of complexity", self.complexity, "..."
 
             for expr in self.expressions():
-                #print expr
+                
+                evaluations = {id(g): expr.evaluate(g) for g in self.graphs}
                 
                 try:
-                    if not all(self.comparator(expr.evaluate(g), targets[id(g)]) for g in self.graphs):
-                        continue
+                    # The expression has to be true for all the graphs in the brain.
+                    if not all(self.comparator(evaluations[id(g)], targets[id(g)]) for g in self.graphs):
+                        # If we're checking <= or >=, we need the expression to have equality for at least one graph.
+                        if self.comparator in [operator.le, operator.ge] and all(evaluations[id(g)] != targets[id(g)] for g in self.graphs):
+                            continue
                 except (TypeError, ValueError) as e:
                     #print "Unable to evaluate", expr, ":", e
                     continue
 
                 for g in self.graphs:
-                    gid = g.graph6_string()
+                    gid = id(g)
 
                     try:
                         evaluation = expr.evaluate(g)
@@ -75,7 +79,7 @@ class GraphBrain(SageObject):
                     if gid in conjectures and evaluation == conjectures[gid]['value']:
                         conjectures[gid]['expressions'].append(expr)
                     elif gid not in conjectures or not self.comparator(evaluation, conjectures[gid]['value']):
-                        conjectures[gid] = {'value': evaluation, 'expressions': [expr]}
+                        conjectures[gid] = {'graph6': g.graph6_string(),'value': evaluation, 'expressions': [expr]}
 
             if not conjectures:
                 self.complexity += 1
