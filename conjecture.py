@@ -18,7 +18,8 @@ class GraphBrain(SageObject):
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
-    def __init__(self, name=None, comparator=None, target=None, graphs=[], complexity=1,
+    def __init__(self, name=None, comparator=operator.le, graphs=[], complexity=1,
+                 target=INPGraph.independence_number,
                  graph_invariants=_default_graph_invariants,
                  unary_operators=_default_unary_operators,
                  binary_commutative_operators=_default_binary_commutative_operators,
