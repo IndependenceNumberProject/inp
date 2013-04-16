@@ -625,6 +625,19 @@ class INPGraph(Graph):
     def GemGraph(cls):
         return cls('Dh{')
 
+    @classmethod
+    def SuperClaw(cls, i, j, k):
+        n = i + j + k + 1
+        g = INPGraph(n)
+        g.add_path([0] + range(n)[1:i+1])
+        g.add_path([0] + range(n)[i+1:i+j+1])
+        g.add_path([0] + range(n)[i+j+1:i+j+k+1])
+        return g
+
+    @classmethod
+    def SkewStar(cls):
+        return cls.SuperClaw(1,2,3)
+
     @memoize_graphs
     def matching_number(self):
         r"""
