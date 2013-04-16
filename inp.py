@@ -1050,6 +1050,9 @@ class INPGraph(Graph):
     def is_diamond_free(self):
         return self.subgraph_search(graphs.DiamondGraph(), induced=True) is None
 
+    def is_skew_star_free(self):
+        return self.subgraph_search(INPGraph.SkewStar(), induced=True) is None
+
     ###########################################################################
     # Alpha properties
     ###########################################################################
