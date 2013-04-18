@@ -7,9 +7,12 @@ import itertools
 import operator
 
 class GraphBrain(SageObject):
+    # Don't add Graph.wiener_index to the graph invariants, it causes a bug when
+    # creating a symbolic function in GraphExpression.expression() for reasons unknown.
+    # TODO: Fix whatever is causing wiener_index to break the expression code.
     _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
                                  INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
-                                 Graph.wiener_index, INPGraph.residue, INPGraph.fractional_alpha,
+                                 INPGraph.residue, INPGraph.fractional_alpha,
                                  INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
                                  INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
     _default_unary_operators = [sqrt]
@@ -18,7 +21,8 @@ class GraphBrain(SageObject):
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
-    def __init__(self, name=None, comparator=None, target=None, graphs=[], complexity=1,
+    def __init__(self, name=None, comparator=operator.le, graphs=[], complexity=1,
+                 target=INPGraph.independence_number,
                  graph_invariants=_default_graph_invariants,
                  unary_operators=_default_unary_operators,
                  binary_commutative_operators=_default_binary_commutative_operators,
@@ -43,9 +47,14 @@ class GraphBrain(SageObject):
         Return a list of true statements that are also significant for at least
         one graph in the brain, that is, the statement gives the tightest bound.
         """
+        if not self.graphs:
+            raise ValueError("There must be at least one graph in the brain.")
+
         conjectures = {}
         targets = {id(g): self.target(g) for g in self.graphs}
-        #print targets
+
+        if not targets:
+            raise ValueError("The target must apply to at least one graph in the brain.")
 
         while not conjectures:
             
@@ -260,14 +269,21 @@ class GraphExpression(SageObject):
             sage: expr.expression()
             2*sqrt(min_degree(G))
         """
-        g = var(graph_variable)
-        stack = []
-        for op in self.rpn_stack:
-            if op in self.brain.graph_invariants:
-                func = function(op.__name__, nargs=1, evalf_func=op)
-                stack.append(func(g))
-            elif op in self.brain.unary_operators:
-                stack.append(op(stack.pop()))
-            elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
-                stack.append(op(stack.pop(), stack.pop()))
-        return stack.pop()
+
+        if self.rpn_stack:
+            g = var(graph_variable) 
+            stack = []
+
+            for op in self.rpn_stack:
+                if op in self.brain.graph_invariants:
+                    stack.append(function(op.__name__, g, evalf_func=op))
+                elif op in self.brain.unary_operators:
+                    stack.append(op(stack.pop()))
+                elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
+                    stack.append(op(stack.pop(), stack.pop()))
+                else:
+                    raise ValueError("Expression stack contains something the brain doesn't understand.")
+
+            return stack.pop()
+        else:
+            return None
