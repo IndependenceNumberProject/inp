@@ -1272,6 +1272,26 @@ class INPGraph(Graph):
         return False
     has_magnet._is_alpha_property = True
 
+    def has_no_forbidden_subgraphs(self):
+        if not all([self.is_co_gem_free(), self.is_claw_free(), self.is_chair_free()]):
+            return False
+
+        if self.is_p5_free():
+            if not all([
+                self.is_co_gem_free(),
+                self.is_chair_free(),
+                self.is_p_free(),
+                self.is_bull_free(),
+                self.is_co_chair_free(),
+                self.is_house_free(),
+                self.is_gem_free(),
+                self.is_diamond_free()
+                ]):
+                    return False
+        
+        return True
+    has_no_forbidden_subgraphs._is_alpha_property = True
+
     ###########################################################################
     # Lower bounds
     ###########################################################################
@@ -1732,6 +1752,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, is_claw_free, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, has_no_forbidden_subgraphs, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
     _lower_bounds = [angel_campigotto_laforest, Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
