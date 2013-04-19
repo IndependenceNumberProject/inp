@@ -1272,25 +1272,39 @@ class INPGraph(Graph):
         return False
     has_magnet._is_alpha_property = True
 
-    def has_no_forbidden_subgraphs(self):
-        if not all([self.is_co_gem_free(), self.is_claw_free(), self.is_chair_free()]):
-            return False
+    def avoids_forbidden_subgraph(self):
+        results = {
+            'co_gem_free':      self.is_co_gem_free(),
+            'claw_free':        self.is_claw_free(),
+            'chair_free':       self.is_chair_free(),
+            'p5_free':          self.is_p5_free(),
+            'p_free':           self.is_p_free(),
+            'co_p_free':        self.is_co_p_free(),
+            'bull_free':        self.is_bull_free(),
+            'co_chair_free':    self.is_co_chair_free(),
+            'house_free':       self.is_house_free(),
+            'gem_free':         self.is_gem_free(),
+            'diamond_free':     self.is_diamond_free(),
+            'skew_star_free':   self.is_skew_star_free()
+        }
 
-        if self.is_p5_free():
-            if not all([
-                self.is_co_gem_free(),
-                self.is_chair_free(),
-                self.is_p_free(),
-                self.is_bull_free(),
-                self.is_co_chair_free(),
-                self.is_house_free(),
-                self.is_gem_free(),
-                self.is_diamond_free()
-                ]):
-                    return False
-        
-        return True
-    has_no_forbidden_subgraphs._is_alpha_property = True
+        return any([
+                results['co_gem_free'],
+                results['claw_free'],
+                results['chair_free'],
+                results['skew_star_free'],
+                (results['p5_free'] and results['co_gem_free']),
+                (results['p5_free'] and results['chair_free']),
+                (results['p5_free'] and results['co_p_free']),
+                (results['p5_free'] and results['p_free']),
+                (results['p5_free'] and results['bull_free']),
+                (results['p5_free'] and results['co_chair_free']),
+                (results['p5_free'] and results['house_free']),
+                (results['p5_free'] and results['gem_free']),
+                (results['p5_free'] and results['diamond_free'])
+            ])
+
+    avoids_forbidden_subgraph._is_alpha_property = True
 
     ###########################################################################
     # Lower bounds
@@ -1752,6 +1766,6 @@ class INPGraph(Graph):
         return n - C/2 - Integer(1)/2
     cut_vertices_bound._is_upper_bound = True
 
-    _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, has_no_forbidden_subgraphs, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
+    _alpha_properties = [has_magnet, Graph.is_perfect, has_simplicial_vertex, avoids_forbidden_subgraph, has_nonempty_KE_part, is_almost_KE, is_fold_reducible]
     _lower_bounds = [angel_campigotto_laforest, Graph.radius, Graph.average_distance, five_fourteenths_lower_bound, max_even_minus_even_horizontal, max_odd_minus_odd_horizontal, matching_lower_bound, residue, average_degree_bound, caro_wei, seklow, wilf, hansen_zheng_lower_bound, harant]
     _upper_bounds = [matching_upper_bound, fractional_alpha, lovasz_theta, kwok, hansen_zheng_upper_bound, min_degree_bound, cvetkovic, annihilation_number, borg, cut_vertices_bound]
