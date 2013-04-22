@@ -599,6 +599,9 @@ class INPGraph(Graph):
 
         for old, new in escape_chars.iteritems():
             str = str.replace(old, new)
+
+        str = str.replace('`', r'\`{}')    
+        
         return str
 
     @classmethod
