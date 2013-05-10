@@ -249,12 +249,16 @@ class GraphExpression(SageObject):
         """
         stack = []
         for op in self.rpn_stack:
-            if op in self.brain.graph_invariants:
-                stack.append(op(g))
-            elif op in self.brain.unary_operators:
-                stack.append(op(stack.pop()))
-            elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
-                stack.append(op(stack.pop(), stack.pop()))
+            try:
+                if op in self.brain.graph_invariants:
+                    stack.append(op(g))
+                elif op in self.brain.unary_operators:
+                    stack.append(op(stack.pop()))
+                elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
+                    stack.append(op(stack.pop(), stack.pop()))
+            except (ValueError, sage.rings.infinity.SignError) as e:
+                print "Can't evaluate", self, ":", e
+                return None
         return stack.pop()
 
     def expression(self, graph_variable='G'):
