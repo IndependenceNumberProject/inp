@@ -42,7 +42,7 @@ class GraphBrain(SageObject):
         self.binary_commutative_operators = binary_commutative_operators
         self.binary_noncommutative_operators = binary_noncommutative_operators
 
-    def conjecture(self):
+    def conjecture(self, verbose=True):
         r"""
         Return a list of true statements that are also significant for at least
         one graph in the brain, that is, the statement gives the tightest bound.
@@ -58,25 +58,25 @@ class GraphBrain(SageObject):
 
         while not conjectures:
             
-            print "Checking expressions of complexity", self.complexity, "..."
+            if verbose: print "Checking expressions of complexity", self.complexity, "..."
 
             for expr in self.expressions():
 
-                print expr
+                if verbose: print expr
                 
                 evaluations = {id(g): expr.evaluate(g) for g in self.graphs}
                 
                 try:
                     # The expression has to be true for all the graphs in the brain.
                     if not all(self.comparator(evaluations[id(g)], targets[id(g)]) for g in self.graphs):
-                        print "\tNot true for all graphs"
+                        if verbose: print "\tNot true for all graphs"
                         continue
                     # If we're checking <= or >=, we need the expression to have equality for at least one graph.
                     if self.comparator in [operator.le, operator.ge] and all(evaluations[id(g)] != targets[id(g)] for g in self.graphs):
-                        print "\tNo equality for at least one graph"
+                        if verbose: print "\tNo equality for at least one graph"
                         continue
                 except (TypeError, ValueError) as e:
-                    print "\tUnable to evaluate", expr, ":", e
+                    if verbose: print "\tUnable to evaluate", expr, ":", e
                     continue
 
                 for g in self.graphs:
@@ -89,14 +89,14 @@ class GraphBrain(SageObject):
                         #print "Unable to evaluate", expr, "for graph", g.graph6_string(), ":", e
                         break
 
-                    print "\t", expr, "for", g.graph6_string(), "is", evaluation, "({0} is {1})".format(self.target.__name__, targets[gid])
+                    if verbose: print "\t", expr, "for", g.graph6_string(), "is", evaluation, "({0} is {1})".format(self.target.__name__, targets[gid])
        
                     if gid in conjectures and evaluation == conjectures[gid]['value']:
                         conjectures[gid]['expressions'].append(expr)
-                        print "\t\tAppending to conjectures for", g.graph6_string()
+                        if verbose: print "\t\tAppending to conjectures for", g.graph6_string()
                     elif gid not in conjectures or not self.comparator(evaluation, conjectures[gid]['value']):
                         conjectures[gid] = {'graph6': g.graph6_string(),'value': evaluation, 'expressions': [expr]}
-                        print "\t\tNew conjecture for", g.graph6_string(), "(better than previous)"
+                        if verbose: print "\t\tNew conjecture for", g.graph6_string(), "(better than previous)"
             if not conjectures:
                 self.complexity += 1
 
