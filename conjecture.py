@@ -10,18 +10,18 @@ class GraphBrain(SageObject):
     # Don't add Graph.wiener_index to the graph invariants, it causes a bug when
     # creating a symbolic function in GraphExpression.expression() for reasons unknown.
     # TODO: Fix whatever is causing wiener_index to break the expression code.
-    _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
-                                 INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
-                                 INPGraph.residue, INPGraph.fractional_alpha,
-                                 INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
-                                 INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
+    # _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
+    #                              INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
+    #                              INPGraph.residue, INPGraph.fractional_alpha,
+    #                              INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
+    #                              INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
 
-    # _default_graph_invariants =[Graph.diameter, Graph.radius]
+    _default_graph_invariants =[Graph.diameter, Graph.radius]
     _default_unary_operators = [sqrt]
     _default_binary_commutative_operators = [operator.add, operator.mul]
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
-    _complexity_limit = 5
+    _complexity_limit = 3
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
@@ -44,10 +44,8 @@ class GraphBrain(SageObject):
         self.unary_operators = unary_operators
         self.binary_commutative_operators = binary_commutative_operators
         self.binary_noncommutative_operators = binary_noncommutative_operators
-        self.conjectures = []
-        self.conjecture_cache = {}
 
-    def conjecture(self, verbose=True):
+    def conjecture(self, verbose=True, debug=False):
         r"""
         Return a list of true statements that are also significant for at least
         one graph in the brain, that is, the statement gives the tightest bound.
@@ -55,104 +53,90 @@ class GraphBrain(SageObject):
         if not self.graphs:
             raise ValueError("There must be at least one graph in the brain.")
 
-        cache = {}
-        for g in self.graphs:
-            cache[id(g)] = {'target': self.target(g)}
-
-        bingos = {id(g): False for g in self.graphs}
         complexity = 1
-        while not all(bingos.values()) and complexity <= self._complexity_limit:
-            if verbose: print "*********************", complexity, "*********************"
-            for expr in self.expressions(complexity):
-                if verbose: print expr
-                # if verbose: print "\tComplexity:", complexity
-                # if verbose: print "\tAlpha:", [self.target(g) for g in self.graphs]
-                if verbose: print "\tAlpha:", [cache[gid]['target'] for gid in cache]
-                # if verbose: print "\tNew bingos:", expr.get_bingos()
 
-                significant = False
+        conjectures = []
+        targets = {}
+        bingos = {}
+        significance = {}
+
+        while not bingos or not all(bingos.values()) and complexity <= self._complexity_limit:
+
+            if debug: print "========== COMPLEXITY", complexity, "=========="
+
+
+            expressions = self.expressions(complexity)
+
+            if debug: print expressions
+
+            for expr in expressions:
+
+                if debug: print expr
+
+                exprid = id(expr)
+                truth = []
+                possible_significance = {}
+                possible_bingos = {}
+
                 for g in self.graphs:
+
                     gid = id(g)
-                    cache[gid]['evaluation'] = N(expr.evaluate(g))
-                    cache[gid]['truth'] = self.comparator(cache[gid]['evaluation'], cache[gid]['target'])
-                    if not self.conjectures or gid not in self.conjecture_cache:
-                        significant = True
-                        if verbose: print "\tSignificant, no conjectures"
-                    elif self.comparator in [operator.lt, operator.le]:
-                        if cache[gid]['evaluation'] >= max(self.conjecture_cache[gid].values()):
-                            significant = True
-                            if verbose: print "\tSignificant, beats max of stored conjectures"
-                    elif self.comparator in [operator.gt, operator.ge]:
-                        if cache[gid]['evaluation'] <= min(self.conjecture_cache[gid].values()):
-                            significant = True
-                            if verbose: print "\tSignificant, beats min of stored conjectures"
-                    else:
-                        raise ValueError("Significance is not defined for this comparator.")     
-                    
-                # Check that the expression is true for all graphs.
-                consistent = all(cache[gid]['truth'] for gid in cache)
 
-                # if verbose: print "\tEvals:", [N(expr.evaluate(g)) for g in self.graphs]
-                if verbose: print "\tEvals:", [N(cache[gid]['evaluation']) for gid in cache]
-                # if verbose: print "\tConsistent:", expr.is_consistent()
-                if verbose: print "\tConsistent:", consistent
-                # if verbose: print "\tSignificant:", expr.is_significant()
-                if verbose: print "\tSignificant:", significant
+                    if debug: print "\t->", g.graph6_string(), "=",expr.evaluate(g)
+
+                    if gid not in targets:
+                        targets[gid] = self.target(g)
+
+                    if gid not in bingos:
+                        bingos[gid] = False
+
+                    evaluation = expr.evaluate(g)
+                    target = targets[gid]
+                    true_for_this_graph = self.comparator(evaluation, target)
+                    truth.append(true_for_this_graph)
+
+                    if true_for_this_graph:
+                        if gid not in significance or \
+                            (self.comparator in [operator.gt, operator.ge] and evaluation < significance[gid]['value']) or \
+                            (self.comparator in [operator.lt, operator.le] and evaluation > significance[gid]['value']):
+
+                            if debug: print "\t\tPossible significance"
+                            if exprid not in possible_significance:
+                                possible_significance[exprid] = {}
+                            possible_significance[exprid][gid] = {'expression': expr, 'value': evaluation}
+                            
+
+                        if evaluation == target:
+                            if debug: print "\t\tPossible bingo"
+                            if exprid not in possible_bingos:
+                                possible_bingos[exprid] = {}
+                            possible_bingos[exprid][gid] = True
 
 
-                # if verbose: print "\tConsistent:", consistent, expr.is_consistent()
-                # if consistent != expr.is_consistent():
-                #     print "Different consistent answers!!!"
-                #     break
+                if debug: print "\tTrue for all graphs:", all(truth)
 
-                #if verbose: print "\tSignificant:", significant, expr.is_significant()
-                # if significant != expr.is_significant():
-                #     print "Different significant answers!!!"
-                #     break
+                if all(truth) and exprid in possible_significance:
+                    conjectures.append(expr)
+                    if debug: print "\tConjecture added"
+                    for gid in possible_significance[exprid]:
+                        significance[gid] = possible_significance[exprid][gid]
+                        
+                if all(truth) and exprid in possible_bingos:
+                    for gid in possible_bingos[exprid]:
+                        if possible_bingos[exprid][gid]:
+                            bingos[gid] = True
+                            if debug: print "\tBingo added"
 
-                #if expr.is_consistent() and expr.is_significant():
-                if consistent and significant:
-                    if verbose: print "\t*** Adding conjecture to brain."
-                    #brain.add_conjecture(expr)
-
-                    self.conjectures.append(expr)
-                    for gid in cache:
-                        if gid not in self.conjecture_cache:
-                            self.conjecture_cache[gid] = {}
-                        self.conjecture_cache[gid][id(expr)] = cache[gid]['evaluation']
-                        self._remove_insignificant_conjectures()
-
-                #bingos.update(expr.get_bingos())
-                bingos.update({id(g): True for gid in cache if cache[gid]['evaluation'] == cache[gid]['target']})
-
-                if verbose: print "\tConjectures:", self.conjectures
-                if verbose: print "\tConjecture cache:", self.conjecture_cache 
-                if verbose: print "\tAll bingos:", bingos
-                if verbose: print
+                if debug: print "\tSignificant:", significance
+                if debug: print "\tBingos:", bingos
+                if debug: print "\tConjectures:", conjectures
 
                 if all(bingos.values()): break
 
             complexity += 1
-        return self.conjectures
 
-    def add_conjecture(self, expr):
-        self.conjectures.append(expr)
-        for g in self.graphs:
-            if id(g) not in self.conjecture_cache:
-                self.conjecture_cache[id(g)] = {}
+        return conjectures
 
-            self.conjecture_cache[id(g)][id(expr)] = expr.evaluate(g)
-        self._remove_insignificant_conjectures()
-
-    def _remove_insignificant_conjectures(self):
-        temp = []
-        for expr in self.conjectures:
-            if expr.is_significant():
-                temp.append(expr)
-            else:
-                for g in self.graphs:
-                    del self.conjecture_cache[id(g)][id(expr)]
-        self.conjectures = temp
 
     def expressions(self, complexity, _cache=None):
         r"""
@@ -196,16 +180,20 @@ class GraphBrain(SageObject):
 
                 # Binary operators
                 for k in range(1, complexity - 1):
-                    for a in self.expressions(k, _cache):
-                        for b in self.expressions(complexity - 1 - k, _cache):
+                    for i, a in enumerate(self.expressions(k, _cache)):
+                        for j, b in enumerate(self.expressions(complexity - 1 - k, _cache)):
                             # Noncommutative
                             for op in self.binary_noncommutative_operators:
-                                _cache[complexity].append(a.operate(op, b))
+                                new_expr = a.operate(op, b)
+                                if not new_expr.expression().is_numeric():
+                                    _cache[complexity].append(a.operate(op, b))
 
                             # Commutative
-                            if k <= complexity - 1 - k:
+                            if k <= complexity - 1 - k and j <= i:
                                 for op in self.binary_commutative_operators:
-                                    _cache[complexity].append(a.operate(op, b))
+                                    new_expr = a.operate(op, b)
+                                    if not new_expr.expression().is_numeric():
+                                        _cache[complexity].append(a.operate(op, b))
 
         return _cache[complexity]
         
@@ -305,10 +293,7 @@ class GraphExpression(SageObject):
                 elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
                     stack.append(op(stack.pop(), stack.pop()))
             except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                try:
-                    print "Can't evaluate", self, ":", e
-                except Exception as e:
-                    print "Can't evaluate or display an expression:", e
+                print "Can't evaluate", self.rpn_stack, ":", e
                 return None
         return stack.pop()
 
@@ -340,47 +325,10 @@ class GraphExpression(SageObject):
                     else:
                         raise ValueError("Expression stack contains something the brain doesn't understand.")
                 except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                    print "Can't display an expression:", e
+                    print "Can't display", self.rpn_stack, ":", e
                     return None
 
             return stack.pop()
         else:
             return None
 
-    # def is_true(self, g):
-    #     r"""
-    #     Return True when the expression is compared (using the brain's comparator)
-    #     to the target invariant for the given graph.
-    #     """
-    #     return self.brain.comparator(self.evaluate(g), self.brain.target(g))
-
-    # def is_consistent(self):
-    #     r"""
-    #     Return True if the expression is true for each graph stored in the brain.
-    #     """
-    #     # all(self.comparator(evaluations[id(g)], targets[id(g)]) for g in self.graphs):
-    #     #evaluations = (self.evaluate(g) for g in self.brain.graphs)
-    #     #print evaluations
-    #     #return False
-    #     return all(self.is_true(g) for g in self.brain.graphs)
-
-    def is_significant(self):
-        for g in self.brain.graphs:
-            if not self.brain.conjectures: return True
-
-            if self.brain.comparator in [operator.lt, operator.le]:
-                if self.evaluate(g) >= max(self.brain.conjecture_cache[id(g)].values()):
-                    return True
-            elif self.brain.comparator in [operator.gt, operator.ge]:
-                if self.evaluate(g) <= min(self.brain.conjecture_cache[id(g)].values()):
-                    return True
-            else:
-                raise ValueError("Significance is not defined for this comparator.")
-        return False
-
-    # def get_bingos(self):
-    #     r"""
-    #     Return a dictionary containing the id() of graphs (with the value True)
-    #     for which the expression is equal to the target invariant.
-    #     """
-    #     return {id(g): True for g in self.brain.graphs if self.evaluate(g) == self.brain.target(g)}
