@@ -225,8 +225,8 @@ class GraphExpression(SageObject):
         self.rpn_stack = rpn_stack
         super(GraphExpression, self).__init__()
 
-    # def __eq__(self, other):
-    #     return self.expression() == other.expression()
+    def __eq__(self, other):
+        return self.rpn_stack == other.rpn_stack
 
     def _repr_(self):
         return repr(self.expression())
