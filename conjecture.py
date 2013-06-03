@@ -21,7 +21,7 @@ class GraphBrain(SageObject):
     _default_binary_commutative_operators = [operator.add, operator.mul]
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
-    _complexity_limit = 3
+    _complexity_limit = 5
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
@@ -78,40 +78,43 @@ class GraphBrain(SageObject):
                 possible_significance = {}
                 possible_bingos = {}
 
-                for g in self.graphs:
+                try:
+                    for g in self.graphs:
 
-                    gid = id(g)
+                        gid = id(g)
 
-                    if debug: print "\t->", g.graph6_string(), "=",expr.evaluate(g)
+                        if debug: print "\t->", g.graph6_string(), "=",expr.evaluate(g)
 
-                    if gid not in targets:
-                        targets[gid] = self.target(g)
+                        if gid not in targets:
+                            targets[gid] = self.target(g)
 
-                    if gid not in bingos:
-                        bingos[gid] = False
+                        if gid not in bingos:
+                            bingos[gid] = False
 
-                    evaluation = expr.evaluate(g)
-                    target = targets[gid]
-                    true_for_this_graph = self.comparator(evaluation, target)
-                    truth.append(true_for_this_graph)
+                        evaluation = expr.evaluate(g)
+                        target = targets[gid]
+                        true_for_this_graph = self.comparator(evaluation, target)
+                        truth.append(true_for_this_graph)
 
-                    if true_for_this_graph:
-                        if gid not in significance or \
-                            (self.comparator in [operator.gt, operator.ge] and evaluation < significance[gid]['value']) or \
-                            (self.comparator in [operator.lt, operator.le] and evaluation > significance[gid]['value']):
+                        if true_for_this_graph:
+                            if gid not in significance or \
+                                (self.comparator in [operator.gt, operator.ge] and evaluation < significance[gid]['value']) or \
+                                (self.comparator in [operator.lt, operator.le] and evaluation > significance[gid]['value']):
 
-                            if debug: print "\t\tPossible significance"
-                            if exprid not in possible_significance:
-                                possible_significance[exprid] = {}
-                            possible_significance[exprid][gid] = {'expression': expr, 'value': evaluation}
-                            
+                                if debug: print "\t\tPossible significance"
+                                if exprid not in possible_significance:
+                                    possible_significance[exprid] = {}
+                                possible_significance[exprid][gid] = {'expression': expr, 'value': evaluation}
+                                
 
-                        if evaluation == target:
-                            if debug: print "\t\tPossible bingo"
-                            if exprid not in possible_bingos:
-                                possible_bingos[exprid] = {}
-                            possible_bingos[exprid][gid] = True
-
+                            if evaluation == target:
+                                if debug: print "\t\tPossible bingo"
+                                if exprid not in possible_bingos:
+                                    possible_bingos[exprid] = {}
+                                possible_bingos[exprid][gid] = True
+                except Exception as e:
+                    if debug: print e
+                    if debug: print "Exception, bailing out of graph loop."
 
                 if debug: print "\tTrue for all graphs:", all(truth)
 
@@ -293,7 +296,8 @@ class GraphExpression(SageObject):
                 elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
                     stack.append(op(stack.pop(), stack.pop()))
             except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                print "Can't evaluate", self.rpn_stack, ":", e
+                raise ValueError("Can't evaluate", self.rpn_stack, ":", e)
+                # print "Can't evaluate", self.rpn_stack, ":", e
                 return None
         return stack.pop()
 
@@ -325,7 +329,8 @@ class GraphExpression(SageObject):
                     else:
                         raise ValueError("Expression stack contains something the brain doesn't understand.")
                 except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                    print "Can't display", self.rpn_stack, ":", e
+                    raise ValueError("Can't display", self.rpn_stack, ":", e)
+                    # print "Can't display", self.rpn_stack, ":", e
                     return None
 
             return stack.pop()
