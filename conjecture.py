@@ -45,6 +45,10 @@ class GraphBrain(SageObject):
         self.binary_commutative_operators = binary_commutative_operators
         self.binary_noncommutative_operators = binary_noncommutative_operators
 
+    def _repr_(self):
+        return "Name: {0}\nComparator: {1}\nGraphs: {2}\nTarget: {3}\nGraph invariants: {4}\nUnary operators: {5}\nBinary commutative operators: {6}\nBinary noncommutative operators:{7}".format(
+            self.name, self.comparator, self.graphs, self.target, self.graph_invariants, self.unary_operators, self.binary_commutative_operators, self.binary_noncommutative_operators)
+
     def conjecture(self, verbose=True, debug=False):
         r"""
         Return a list of true statements that are also significant for at least
