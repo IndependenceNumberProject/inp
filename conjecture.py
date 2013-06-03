@@ -21,7 +21,7 @@ class GraphBrain(SageObject):
     _default_binary_commutative_operators = [operator.add, operator.mul]
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
-    _complexity_limit = 5
+    _complexity_limit = 8
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
@@ -66,6 +66,8 @@ class GraphBrain(SageObject):
 
 
             expressions = self.expressions(complexity)
+            expression_count = len(expressions)
+            counter =0
 
             if debug: print expressions
 
@@ -136,9 +138,16 @@ class GraphBrain(SageObject):
                 if debug: print "\tConjectures:", conjectures
                 if debug: print
 
+                counter += 1
+                num_bingos = sum(1 for gid in bingos if bingos[gid])
+                if verbose:
+                    sys.stdout.write("\rSearching complexity {0}: {1}/{2} ({3:.2f}%) (Bingos: {4}/{5})".format(complexity, counter, expression_count, (float(counter)/expression_count)*100, num_bingos, len(bingos)))
+                    sys.stdout.flush()
+
                 if all(bingos.values()): break
 
             complexity += 1
+            if verbose: print
 
         return conjectures
 
