@@ -105,7 +105,8 @@ class GraphBrain(SageObject):
                                 if exprid not in possible_significance:
                                     possible_significance[exprid] = {}
                                 possible_significance[exprid][gid] = {'expression': expr, 'value': evaluation}
-                                
+                            elif self.comparator not in [operator.gt, operator.ge, operator.lt, operator.le]:
+                                raise ValueError("Significance is not defined for this comparator.")
 
                             if evaluation == target:
                                 if debug: print "\t\tPossible bingo"
@@ -133,6 +134,7 @@ class GraphBrain(SageObject):
                 if debug: print "\tSignificant:", significance
                 if debug: print "\tBingos:", bingos
                 if debug: print "\tConjectures:", conjectures
+                if debug: print
 
                 if all(bingos.values()): break
 
