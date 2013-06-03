@@ -10,18 +10,18 @@ class GraphBrain(SageObject):
     # Don't add Graph.wiener_index to the graph invariants, it causes a bug when
     # creating a symbolic function in GraphExpression.expression() for reasons unknown.
     # TODO: Fix whatever is causing wiener_index to break the expression code.
-    # _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
-    #                              INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
-    #                              INPGraph.residue, INPGraph.fractional_alpha,
-    #                              INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
-    #                              INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
+    _default_graph_invariants = [Graph.average_distance, Graph.diameter, Graph.radius, Graph.girth,
+                                 INPGraph.matching_number, Graph.order, Graph.size, Graph.szeged_index,
+                                 INPGraph.residue, INPGraph.fractional_alpha,
+                                 INPGraph.annihilation_number, INPGraph.lovasz_theta, INPGraph.cvetkovic,
+                                 INPGraph.max_degree, INPGraph.min_degree, Graph.average_degree]
 
-    _default_graph_invariants =[Graph.diameter, Graph.radius]
+    # _default_graph_invariants =[Graph.diameter, Graph.radius]
     _default_unary_operators = [sqrt]
     _default_binary_commutative_operators = [operator.add, operator.mul]
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
-    _complexity_limit = 8
+    _complexity_limit = 10
 
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
@@ -53,9 +53,9 @@ class GraphBrain(SageObject):
         if not self.graphs:
             raise ValueError("There must be at least one graph in the brain.")
 
+        if debug: verbose = False
         complexity = 1
 
-        conjectures = []
         targets = {}
         bingos = {}
         significance = {}
@@ -64,10 +64,9 @@ class GraphBrain(SageObject):
 
             if debug: print "========== COMPLEXITY", complexity, "=========="
 
-
             expressions = self.expressions(complexity)
             expression_count = len(expressions)
-            counter =0
+            counter = 0
 
             if debug: print expressions
 
@@ -106,7 +105,7 @@ class GraphBrain(SageObject):
                                 if debug: print "\t\tPossible significance"
                                 if exprid not in possible_significance:
                                     possible_significance[exprid] = {}
-                                possible_significance[exprid][gid] = {'expression': expr, 'value': evaluation}
+                                possible_significance[exprid][gid] = {'exprid': exprid, 'expression': expr, 'value': evaluation}
                             elif self.comparator not in [operator.gt, operator.ge, operator.lt, operator.le]:
                                 raise ValueError("Significance is not defined for this comparator.")
 
@@ -122,10 +121,10 @@ class GraphBrain(SageObject):
                 if debug: print "\tTrue for all graphs:", all(truth)
 
                 if all(truth) and exprid in possible_significance:
-                    conjectures.append(expr)
-                    if debug: print "\tConjecture added"
                     for gid in possible_significance[exprid]:
                         significance[gid] = possible_significance[exprid][gid]
+
+                if debug: print "\tPossible bingos:", possible_bingos
                         
                 if all(truth) and exprid in possible_bingos:
                     for gid in possible_bingos[exprid]:
@@ -135,7 +134,6 @@ class GraphBrain(SageObject):
 
                 if debug: print "\tSignificant:", significance
                 if debug: print "\tBingos:", bingos
-                if debug: print "\tConjectures:", conjectures
                 if debug: print
 
                 counter += 1
@@ -149,7 +147,11 @@ class GraphBrain(SageObject):
             complexity += 1
             if verbose: print
 
-        return conjectures
+        conjectures = {}
+        for gid in significance:
+            conjectures[significance[gid]['exprid']] = significance[gid]['expression']
+
+        return conjectures.values()
 
 
     def expressions(self, complexity, _cache=None):
