@@ -158,7 +158,7 @@ class GraphBrain(SageObject):
         return conjectures.values()
 
 
-    def expressions(self, complexity, _cache=None):
+    def expressions(self, complexity):
         r"""
         Return all possible expressions of the given complexity. If complexity
         is not specified, then use the brain's current complexity level.
@@ -197,14 +197,14 @@ class GraphBrain(SageObject):
                 self.expressions._cache[brain_tuple][complexity] = []
 
                 # Unary operators
-                for expr in self.expressions(complexity - 1, _cache):
+                for expr in self.expressions(complexity - 1):
                     for op in self.unary_operators:
                         self.expressions._cache[brain_tuple][complexity].append(expr.operate(op))
 
                 # Binary operators
                 for k in range(1, complexity - 1):
-                    for i, a in enumerate(self.expressions(k, _cache)):
-                        for j, b in enumerate(self.expressions(complexity - 1 - k, _cache)):
+                    for i, a in enumerate(self.expressions(k)):
+                        for j, b in enumerate(self.expressions(complexity - 1 - k)):
                             # Noncommutative
                             for op in self.binary_noncommutative_operators:
                                 new_expr = a.operate(op, b)
