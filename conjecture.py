@@ -180,10 +180,10 @@ class GraphBrain(SageObject):
             sage: brain.expressions(2)
             [sqrt(diameter(G)), sqrt(radius(G))]
             sage: brain.expressions(3)
-            [diameter(G)^(1/4), radius(G)^(1/4), 0, 2*diameter(G), radius(G) - diameter(G), radius(G) + diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 0, 2*radius(G)]
+            [diameter(G)^(1/4), radius(G)^(1/4), 2*diameter(G), radius(G) - diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 2*radius(G)]
         """
         brain_tuple = tuple([tuple(self.graph_invariants), tuple(self.unary_operators),
-            tuple(self.binary_commutative_operators), tuple(self.binary_noncommutative_operators)])
+            tuple(self.binary_commutative_operators), tuple(self.binary_noncommutative_operators), self.target])
 
         if brain_tuple not in self.expressions._cache:
             self.expressions._cache[brain_tuple] = {}
