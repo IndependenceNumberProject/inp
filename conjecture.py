@@ -182,21 +182,24 @@ class GraphBrain(SageObject):
             sage: brain.expressions(3)
             [diameter(G)^(1/4), radius(G)^(1/4), 0, 2*diameter(G), radius(G) - diameter(G), radius(G) + diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 0, 2*radius(G)]
         """
-        if _cache is None:
-            _cache = {}
+        brain_tuple = tuple([tuple(self.graph_invariants), tuple(self.unary_operators),
+            tuple(self.binary_commutative_operators), tuple(self.binary_noncommutative_operators)])
 
-        if complexity not in _cache:
+        if brain_tuple not in self.expressions._cache:
+            self.expressions._cache[brain_tuple] = {}
+
+        if complexity not in self.expressions._cache[brain_tuple]:
             if complexity < 1:
                 return []
             elif complexity == 1:
-                _cache[1] = [GraphExpression(self, [inv]) for inv in self.graph_invariants if inv != self.target]
+                self.expressions._cache[brain_tuple][1] = [GraphExpression(self, [inv]) for inv in self.graph_invariants if inv != self.target]
             else:
-                _cache[complexity] = []
+                self.expressions._cache[brain_tuple][complexity] = []
 
                 # Unary operators
                 for expr in self.expressions(complexity - 1, _cache):
                     for op in self.unary_operators:
-                        _cache[complexity].append(expr.operate(op))
+                        self.expressions._cache[brain_tuple][complexity].append(expr.operate(op))
 
                 # Binary operators
                 for k in range(1, complexity - 1):
@@ -206,16 +209,17 @@ class GraphBrain(SageObject):
                             for op in self.binary_noncommutative_operators:
                                 new_expr = a.operate(op, b)
                                 if not new_expr.expression().is_numeric():
-                                    _cache[complexity].append(a.operate(op, b))
+                                    self.expressions._cache[brain_tuple][complexity].append(a.operate(op, b))
 
                             # Commutative
                             if k <= complexity - 1 - k and j <= i:
                                 for op in self.binary_commutative_operators:
                                     new_expr = a.operate(op, b)
                                     if not new_expr.expression().is_numeric():
-                                        _cache[complexity].append(a.operate(op, b))
+                                        self.expressions._cache[brain_tuple][complexity].append(a.operate(op, b))
 
-        return _cache[complexity]
+        return self.expressions._cache[brain_tuple][complexity]
+    expressions._cache = {}
         
 class GraphExpression(SageObject):
 
