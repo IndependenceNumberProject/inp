@@ -50,6 +50,7 @@ class GraphBrain(SageObject):
         return "Name: {0}\nComparator: {1}\nGraphs: {2}\nTarget: {3}\nGraph invariants: {4}\nUnary operators: {5}\nBinary commutative operators: {6}\nBinary noncommutative operators:{7}".format(
             self.name, self.comparator, self.graphs, self.target, self.graph_invariants, self.unary_operators, self.binary_commutative_operators, self.binary_noncommutative_operators)
 
+    # @profile
     def conjecture(self, verbose=True, debug=False):
         r"""
         Return a list of true statements that are also significant for at least
@@ -99,7 +100,7 @@ class GraphBrain(SageObject):
 
                         evaluation = expr.evaluate(g, use_cache=True)
                         target = targets[gid]
-                        true_for_this_graph = self.comparator(evaluation, target)
+                        true_for_this_graph = bool(self.comparator(evaluation, target))
                         truth.append(true_for_this_graph)
 
                         if true_for_this_graph:
@@ -158,7 +159,7 @@ class GraphBrain(SageObject):
 
         return conjectures.values()
 
-
+    # @profile    
     def expressions(self, complexity):
         r"""
         Return all possible expressions of the given complexity. If complexity
@@ -292,6 +293,7 @@ class GraphExpression(SageObject):
         """
         return len(self.rpn_stack)
 
+    # @profile
     def evaluate(self, g, use_cache=False):
         r"""
         Evaluate the expression for the given graph.
@@ -323,6 +325,7 @@ class GraphExpression(SageObject):
         else:
             return self._evaluate(g, use_cache)
 
+    # @profile
     def _evaluate(self, g, use_cache=False):
         stack = []
         for op in self.rpn_stack:
@@ -392,3 +395,8 @@ class GraphExpression(SageObject):
         else:
             return None
 
+
+# if __name__ == '__main__':
+#     brain = GraphBrain()
+#     brain.graphs = [INPGraph(s) for s in ['J?`FBo{fdb?','A_','Bg','Ch','E~~w','KlaIAC_GG_A@','Cs','K~~{?CB?wF_^','EFz_']]
+#     brain.conjecture()
