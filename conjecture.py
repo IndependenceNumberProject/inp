@@ -74,8 +74,6 @@ class GraphBrain(SageObject):
             expression_count = len(expressions)
             counter = 0
 
-            if debug: print expressions
-
             for expr in expressions:
 
                 if debug: print expr
@@ -85,61 +83,64 @@ class GraphBrain(SageObject):
                 possible_significance = {}
                 possible_bingos = {}
 
-                try:
-                    for g in self.graphs:
+                for g in self.graphs:
 
-                        gid = id(g)
+                    gid = id(g)
 
-                        if debug: print "\t->", g.graph6_string(), "=",expr.evaluate(g)
+                    if debug: print "\t->", g.graph6_string(), "=",expr.evaluate(g)
 
-                        if gid not in targets:
-                            targets[gid] = self.target(g)
+                    if gid not in targets:
+                        targets[gid] = self.target(g)
 
-                        if gid not in bingos:
-                            bingos[gid] = False
+                    if gid not in bingos:
+                        bingos[gid] = False
 
+                    try:
                         evaluation = expr.evaluate(g, use_cache=True)
                         target = targets[gid]
                         true_for_this_graph = bool(self.comparator(evaluation, target))
-                        truth.append(true_for_this_graph)
+                    except Exception as e:
+                        true_for_this_graph = False
+                        if debug: print e
+                        if debug: print "Exception, bailing out of graph loop."
 
-                        if true_for_this_graph:
-                            if gid not in significance or \
-                                (self.comparator in [operator.gt, operator.ge] and evaluation < significance[gid]['value']) or \
-                                (self.comparator in [operator.lt, operator.le] and evaluation > significance[gid]['value']):
+                    truth.append(true_for_this_graph) 
 
-                                if debug: print "\t\tPossible significance"
-                                if exprid not in possible_significance:
-                                    possible_significance[exprid] = {}
-                                possible_significance[exprid][gid] = {'exprid': exprid, 'expression': expr, 'value': evaluation}
-                            elif self.comparator not in [operator.gt, operator.ge, operator.lt, operator.le]:
-                                raise ValueError("Significance is not defined for this comparator.")
+                    if true_for_this_graph:
+                        if gid not in significance or \
+                            (self.comparator in [operator.gt, operator.ge] and evaluation < significance[gid]['value']) or \
+                            (self.comparator in [operator.lt, operator.le] and evaluation > significance[gid]['value']):
 
-                            if evaluation == target:
-                                if debug: print "\t\tPossible bingo"
-                                if exprid not in possible_bingos:
-                                    possible_bingos[exprid] = {}
-                                possible_bingos[exprid][gid] = True
-                except Exception as e:
-                    if debug: print e
-                    if debug: print "Exception, bailing out of graph loop."
+                            if debug: print "\t\tPossible significance"
+                            if exprid not in possible_significance:
+                                possible_significance[exprid] = {}
+                            possible_significance[exprid][gid] = {'exprid': exprid, 'expression': expr, 'value': evaluation}
+                        elif self.comparator not in [operator.gt, operator.ge, operator.lt, operator.le]:
+                            raise ValueError("Significance is not defined for this comparator.")
+
+                        if evaluation == target:
+                            if debug: print "\t\tPossible bingo"
+                            if exprid not in possible_bingos:
+                                possible_bingos[exprid] = {}
+                            possible_bingos[exprid][gid] = True
 
                 if debug: print "\tTrue for all graphs:", all(truth)
 
-                if all(truth) and exprid in possible_significance:
-                    for gid in possible_significance[exprid]:
-                        significance[gid] = possible_significance[exprid][gid]
+                if all(truth):
+                    if exprid in possible_significance:
+                        for gid in possible_significance[exprid]:
+                            significance[gid] = possible_significance[exprid][gid]
 
-                if debug: print "\tPossible bingos:", possible_bingos
+                    if debug: print "\tPossible bingos:", possible_bingos
                         
-                if all(truth) and exprid in possible_bingos:
-                    for gid in possible_bingos[exprid]:
-                        if possible_bingos[exprid][gid]:
-                            bingos[gid] = True
-                            if debug: print "\tBingo added"
+                    if exprid in possible_bingos:
+                        for gid in possible_bingos[exprid]:
+                            if possible_bingos[exprid][gid]:
+                                bingos[gid] = True
+                                if debug: print "\tBingo added"
 
-                if debug: print "\tSignificant:", significance
-                if debug: print "\tBingos:", bingos
+                # if debug: print "\tSignificant:", significance
+                # if debug: print "\tBingos:", bingos
                 if debug: print
 
                 counter += 1
@@ -329,33 +330,33 @@ class GraphExpression(SageObject):
     def _evaluate(self, g, use_cache=False):
         stack = []
         for op in self.rpn_stack:
-            try:
-                if op in self.brain.graph_invariants:
-                    if use_cache:
-                        gid = id(g)
-                        im_class = op.im_class
-                        name = op.__name__
+            # try:
+            if op in self.brain.graph_invariants:
+                if use_cache:
+                    gid = id(g)
+                    im_class = op.im_class
+                    name = op.__name__
 
-                        if gid not in self.brain._invariant_cache:
-                            self.brain._invariant_cache[gid] = {}
+                    if gid not in self.brain._invariant_cache:
+                        self.brain._invariant_cache[gid] = {}
 
-                        if im_class not in self.brain._invariant_cache[gid]:
-                            self.brain._invariant_cache[gid][im_class] = {}
+                    if im_class not in self.brain._invariant_cache[gid]:
+                        self.brain._invariant_cache[gid][im_class] = {}
 
-                        if name not in self.brain._invariant_cache[gid][im_class]:
-                            self.brain._invariant_cache[gid][im_class][name] = op(g)
-                        
-                        stack.append(self.brain._invariant_cache[gid][im_class][name])
-                    else:
-                        stack.append(op(g))
-                elif op in self.brain.unary_operators:
-                    stack.append(op(stack.pop()))
-                elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
-                    stack.append(op(stack.pop(), stack.pop()))
-            except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                raise ValueError("Can't evaluate", self.rpn_stack, ":", e)
-                # print "Can't evaluate", self.rpn_stack, ":", e
-                return None
+                    if name not in self.brain._invariant_cache[gid][im_class]:
+                        self.brain._invariant_cache[gid][im_class][name] = op(g)
+                    
+                    stack.append(self.brain._invariant_cache[gid][im_class][name])
+                else:
+                    stack.append(op(g))
+            elif op in self.brain.unary_operators:
+                stack.append(op(stack.pop()))
+            elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
+                stack.append(op(stack.pop(), stack.pop()))
+            # except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
+            #     raise ValueError("Can't evaluate", self.rpn_stack, ":", e)
+            #     # print "Can't evaluate", self.rpn_stack, ":", e
+            #     return None
         
         return stack.pop()
 
@@ -377,19 +378,19 @@ class GraphExpression(SageObject):
             stack = []
 
             for op in self.rpn_stack:
-                try:
-                    if op in self.brain.graph_invariants:
-                        stack.append(function(op.__name__, g, evalf_func=op))
-                    elif op in self.brain.unary_operators:
-                        stack.append(op(stack.pop()))
-                    elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
-                        stack.append(op(stack.pop(), stack.pop()))
-                    else:
-                        raise ValueError("Expression stack contains something the brain doesn't understand.")
-                except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
-                    raise ValueError("Can't display", self.rpn_stack, ":", e)
-                    # print "Can't display", self.rpn_stack, ":", e
-                    return None
+                # try:
+                if op in self.brain.graph_invariants:
+                    stack.append(function(op.__name__, g, evalf_func=op))
+                elif op in self.brain.unary_operators:
+                    stack.append(op(stack.pop()))
+                elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
+                    stack.append(op(stack.pop(), stack.pop()))
+                else:
+                    raise ValueError("Expression stack contains something the brain doesn't understand.")
+                # except (ValueError, ZeroDivisionError, sage.rings.infinity.SignError) as e:
+                #     raise ValueError("Can't display", self.rpn_stack, ":", e)
+                #     # print "Can't display", self.rpn_stack, ":", e
+                #     return None
 
             return stack.pop()
         else:
