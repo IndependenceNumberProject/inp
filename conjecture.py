@@ -22,7 +22,8 @@ class GraphBrain(SageObject):
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
     _complexity_limit = 10
-
+    _eval_cache = {}
+    _invariant_cache = {}
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
     def __init__(self, name=None, comparator=operator.le, graphs=[],
@@ -96,7 +97,7 @@ class GraphBrain(SageObject):
                         if gid not in bingos:
                             bingos[gid] = False
 
-                        evaluation = expr.evaluate(g)
+                        evaluation = expr.evaluate(g, use_cache=True)
                         target = targets[gid]
                         true_for_this_graph = self.comparator(evaluation, target)
                         truth.append(true_for_this_graph)
@@ -291,7 +292,7 @@ class GraphExpression(SageObject):
         """
         return len(self.rpn_stack)
 
-    def evaluate(self, g):
+    def evaluate(self, g, use_cache=False):
         r"""
         Evaluate the expression for the given graph.
 
@@ -307,11 +308,43 @@ class GraphExpression(SageObject):
             sage: expr.evaluate(g)
             sqrt(3)
         """
+        if use_cache:
+            gid = id(g)
+            exprid = id(self)
+
+            if gid not in self.brain._eval_cache:
+                self.brain._eval_cache[gid] = {}
+
+            if exprid not in self.brain._eval_cache[gid]:
+                self.brain._eval_cache[gid][exprid] = self._evaluate(g, use_cache)
+
+            return self.brain._eval_cache[gid][exprid]
+
+        else:
+            return self._evaluate(g, use_cache)
+
+    def _evaluate(self, g, use_cache=False):
         stack = []
         for op in self.rpn_stack:
             try:
                 if op in self.brain.graph_invariants:
-                    stack.append(op(g))
+                    if use_cache:
+                        gid = id(g)
+                        im_class = op.im_class
+                        name = op.__name__
+
+                        if gid not in self.brain._invariant_cache:
+                            self.brain._invariant_cache[gid] = {}
+
+                        if im_class not in self.brain._invariant_cache[gid]:
+                            self.brain._invariant_cache[gid][im_class] = {}
+
+                        if name not in self.brain._invariant_cache[gid][im_class]:
+                            self.brain._invariant_cache[gid][im_class][name] = op(g)
+                        
+                        stack.append(self.brain._invariant_cache[gid][im_class][name])
+                    else:
+                        stack.append(op(g))
                 elif op in self.brain.unary_operators:
                     stack.append(op(stack.pop()))
                 elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
@@ -320,6 +353,7 @@ class GraphExpression(SageObject):
                 raise ValueError("Can't evaluate", self.rpn_stack, ":", e)
                 # print "Can't evaluate", self.rpn_stack, ":", e
                 return None
+        
         return stack.pop()
 
     def expression(self, graph_variable='G'):
