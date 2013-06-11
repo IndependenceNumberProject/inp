@@ -22,7 +22,8 @@ class GraphBrain(SageObject):
     _default_binary_noncommutative_operators = [operator.sub, operator.truediv]
 
     _complexity_limit = 10
-
+    _eval_cache = {}
+    _invariant_cache = {}
     _save_path = os.path.expanduser("~/Dropbox/INP")
 
     def __init__(self, name=None, comparator=operator.le, graphs=[],
@@ -49,6 +50,7 @@ class GraphBrain(SageObject):
         return "Name: {0}\nComparator: {1}\nGraphs: {2}\nTarget: {3}\nGraph invariants: {4}\nUnary operators: {5}\nBinary commutative operators: {6}\nBinary noncommutative operators:{7}".format(
             self.name, self.comparator, self.graphs, self.target, self.graph_invariants, self.unary_operators, self.binary_commutative_operators, self.binary_noncommutative_operators)
 
+    # @profile
     def conjecture(self, verbose=True, debug=False):
         r"""
         Return a list of true statements that are also significant for at least
@@ -96,9 +98,9 @@ class GraphBrain(SageObject):
                         if gid not in bingos:
                             bingos[gid] = False
 
-                        evaluation = expr.evaluate(g)
+                        evaluation = expr.evaluate(g, use_cache=True)
                         target = targets[gid]
-                        true_for_this_graph = self.comparator(evaluation, target)
+                        true_for_this_graph = bool(self.comparator(evaluation, target))
                         truth.append(true_for_this_graph)
 
                         if true_for_this_graph:
@@ -157,8 +159,8 @@ class GraphBrain(SageObject):
 
         return conjectures.values()
 
-
-    def expressions(self, complexity, _cache=None):
+    # @profile    
+    def expressions(self, complexity):
         r"""
         Return all possible expressions of the given complexity. If complexity
         is not specified, then use the brain's current complexity level.
@@ -180,42 +182,46 @@ class GraphBrain(SageObject):
             sage: brain.expressions(2)
             [sqrt(diameter(G)), sqrt(radius(G))]
             sage: brain.expressions(3)
-            [diameter(G)^(1/4), radius(G)^(1/4), 0, 2*diameter(G), radius(G) - diameter(G), radius(G) + diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 0, 2*radius(G)]
+            [diameter(G)^(1/4), radius(G)^(1/4), 2*diameter(G), radius(G) - diameter(G), -radius(G) + diameter(G), radius(G) + diameter(G), 2*radius(G)]
         """
-        if _cache is None:
-            _cache = {}
+        brain_tuple = tuple([tuple(self.graph_invariants), tuple(self.unary_operators),
+            tuple(self.binary_commutative_operators), tuple(self.binary_noncommutative_operators), self.target])
 
-        if complexity not in _cache:
+        if brain_tuple not in self.expressions._cache:
+            self.expressions._cache[brain_tuple] = {}
+
+        if complexity not in self.expressions._cache[brain_tuple]:
             if complexity < 1:
                 return []
             elif complexity == 1:
-                _cache[1] = [GraphExpression(self, [inv]) for inv in self.graph_invariants if inv != self.target]
+                self.expressions._cache[brain_tuple][1] = [GraphExpression(self, [inv]) for inv in self.graph_invariants if inv != self.target]
             else:
-                _cache[complexity] = []
+                self.expressions._cache[brain_tuple][complexity] = []
 
                 # Unary operators
-                for expr in self.expressions(complexity - 1, _cache):
+                for expr in self.expressions(complexity - 1):
                     for op in self.unary_operators:
-                        _cache[complexity].append(expr.operate(op))
+                        self.expressions._cache[brain_tuple][complexity].append(expr.operate(op))
 
                 # Binary operators
                 for k in range(1, complexity - 1):
-                    for i, a in enumerate(self.expressions(k, _cache)):
-                        for j, b in enumerate(self.expressions(complexity - 1 - k, _cache)):
+                    for i, a in enumerate(self.expressions(k)):
+                        for j, b in enumerate(self.expressions(complexity - 1 - k)):
                             # Noncommutative
                             for op in self.binary_noncommutative_operators:
                                 new_expr = a.operate(op, b)
                                 if not new_expr.expression().is_numeric():
-                                    _cache[complexity].append(a.operate(op, b))
+                                    self.expressions._cache[brain_tuple][complexity].append(a.operate(op, b))
 
                             # Commutative
                             if k <= complexity - 1 - k and j <= i:
                                 for op in self.binary_commutative_operators:
                                     new_expr = a.operate(op, b)
                                     if not new_expr.expression().is_numeric():
-                                        _cache[complexity].append(a.operate(op, b))
+                                        self.expressions._cache[brain_tuple][complexity].append(a.operate(op, b))
 
-        return _cache[complexity]
+        return self.expressions._cache[brain_tuple][complexity]
+    expressions._cache = {}
         
 class GraphExpression(SageObject):
 
@@ -287,7 +293,8 @@ class GraphExpression(SageObject):
         """
         return len(self.rpn_stack)
 
-    def evaluate(self, g):
+    # @profile
+    def evaluate(self, g, use_cache=False):
         r"""
         Evaluate the expression for the given graph.
 
@@ -303,11 +310,44 @@ class GraphExpression(SageObject):
             sage: expr.evaluate(g)
             sqrt(3)
         """
+        if use_cache:
+            gid = id(g)
+            exprid = id(self)
+
+            if gid not in self.brain._eval_cache:
+                self.brain._eval_cache[gid] = {}
+
+            if exprid not in self.brain._eval_cache[gid]:
+                self.brain._eval_cache[gid][exprid] = self._evaluate(g, use_cache)
+
+            return self.brain._eval_cache[gid][exprid]
+
+        else:
+            return self._evaluate(g, use_cache)
+
+    # @profile
+    def _evaluate(self, g, use_cache=False):
         stack = []
         for op in self.rpn_stack:
             try:
                 if op in self.brain.graph_invariants:
-                    stack.append(op(g))
+                    if use_cache:
+                        gid = id(g)
+                        im_class = op.im_class
+                        name = op.__name__
+
+                        if gid not in self.brain._invariant_cache:
+                            self.brain._invariant_cache[gid] = {}
+
+                        if im_class not in self.brain._invariant_cache[gid]:
+                            self.brain._invariant_cache[gid][im_class] = {}
+
+                        if name not in self.brain._invariant_cache[gid][im_class]:
+                            self.brain._invariant_cache[gid][im_class][name] = op(g)
+                        
+                        stack.append(self.brain._invariant_cache[gid][im_class][name])
+                    else:
+                        stack.append(op(g))
                 elif op in self.brain.unary_operators:
                     stack.append(op(stack.pop()))
                 elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
@@ -316,6 +356,7 @@ class GraphExpression(SageObject):
                 raise ValueError("Can't evaluate", self.rpn_stack, ":", e)
                 # print "Can't evaluate", self.rpn_stack, ":", e
                 return None
+        
         return stack.pop()
 
     def expression(self, graph_variable='G'):
@@ -354,3 +395,8 @@ class GraphExpression(SageObject):
         else:
             return None
 
+
+# if __name__ == '__main__':
+#     brain = GraphBrain()
+#     brain.graphs = [INPGraph(s) for s in ['J?`FBo{fdb?','A_','Bg','Ch','E~~w','KlaIAC_GG_A@','Cs','K~~{?CB?wF_^','EFz_']]
+#     brain.conjecture()
