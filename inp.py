@@ -1698,7 +1698,9 @@ class INPGraph(Graph):
             4
         """
         eigenvalues = self.spectrum()
-        [positive, negative, zero] = [0, 0, 0]
+        positive = 0
+        negative = 0
+        zero = 0
         for e in eigenvalues:
             if e > 0:
                 positive += 1
