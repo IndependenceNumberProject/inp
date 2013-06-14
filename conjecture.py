@@ -70,6 +70,10 @@ class GraphBrain(SageObject):
 
             if debug: print "========== COMPLEXITY", complexity, "=========="
 
+            if verbose:
+                sys.stdout.write("\rGenerating complexity {0}...".format(complexity))
+                sys.stdout.flush()
+
             expressions = self.expressions(complexity)
             expression_count = len(expressions)
             counter = 0
