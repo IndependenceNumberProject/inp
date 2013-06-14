@@ -61,7 +61,6 @@ class GraphBrain(SageObject):
 
         if debug: verbose = False
         complexity = 1
-
         targets = {}
         bingos = {}
         significance = {}
@@ -100,7 +99,7 @@ class GraphBrain(SageObject):
                         bingos[gid] = False
 
                     try:
-                        evaluation = expr.evaluate(g, use_cache=True)
+                        evaluation = expr.evaluate(g, numeric=True, use_cache=True)
                         target = targets[gid]
                         true_for_this_graph = bool(self.comparator(evaluation, target))
                     except Exception as e:
@@ -299,7 +298,7 @@ class GraphExpression(SageObject):
         return len(self.rpn_stack)
 
     # @profile
-    def evaluate(self, g, use_cache=False):
+    def evaluate(self, g, numeric=False, use_cache=False):
         r"""
         Evaluate the expression for the given graph.
 
@@ -323,15 +322,15 @@ class GraphExpression(SageObject):
                 self.brain._eval_cache[gid] = {}
 
             if exprid not in self.brain._eval_cache[gid]:
-                self.brain._eval_cache[gid][exprid] = self._evaluate(g, use_cache)
+                self.brain._eval_cache[gid][exprid] = self._evaluate(g, numeric, use_cache)
 
             return self.brain._eval_cache[gid][exprid]
 
         else:
-            return self._evaluate(g, use_cache)
+            return self._evaluate(g, numeric, use_cache)
 
     # @profile
-    def _evaluate(self, g, use_cache=False):
+    def _evaluate(self, g, numeric=False, use_cache=False):
         stack = []
         for op in self.rpn_stack:
             # try:
@@ -348,11 +347,17 @@ class GraphExpression(SageObject):
                         self.brain._invariant_cache[gid][im_class] = {}
 
                     if name not in self.brain._invariant_cache[gid][im_class]:
-                        self.brain._invariant_cache[gid][im_class][name] = op(g)
+                        if numeric:
+                            self.brain._invariant_cache[gid][im_class][name] = N(op(g))
+                        else:
+                            self.brain._invariant_cache[gid][im_class][name] = op(g)
                     
                     stack.append(self.brain._invariant_cache[gid][im_class][name])
                 else:
-                    stack.append(op(g))
+                    if numeric:
+                        stack.append(N(op(g)))
+                    else:
+                        stack.append(op(g))
             elif op in self.brain.unary_operators:
                 stack.append(op(stack.pop()))
             elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
