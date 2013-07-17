@@ -380,7 +380,15 @@ class GraphExpression(SageObject):
             for op in self.rpn_stack:
                 # try:
                 if op in self.brain.graph_invariants:
-                    stack.append(function(op.__name__, g, evalf_func=op))
+                    import types
+                    if type(op) in (types.BuiltinMethodType, types.MethodType):
+                        def f(obj):
+                            methodToCall = getattr(obj, op.__name__)
+                            return methodToCall()
+                    else:
+                        def f(obj):
+                            return op(obj)
+                    stack.append(function(op.__name__, g, evalf_func=f))
                 elif op in self.brain.unary_operators:
                     stack.append(op(stack.pop()))
                 elif op in self.brain.binary_commutative_operators + self.brain.binary_noncommutative_operators:
