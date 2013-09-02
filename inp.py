@@ -641,6 +641,19 @@ class INPGraph(Graph):
     def SkewStar(cls):
         return cls.SuperClaw(1,2,3)
 
+    @classmethod
+    def LatinSquareGraph(cls, n):
+        g = INPGraph()
+        for i in range(n):
+            for j in range(n):
+                g.add_vertex((i, j, Mod(i + j, n)))
+                for (row, col, item) in g.vertices():
+                    if row == i and col == j: next
+                    if row == i or col == j or item == Mod(i + j, n):
+                        g.add_edge((row, col, item), (i, j, Mod(i + j, n)))
+        g.set_pos(g.layout_circular())
+        return g
+
     @memoize_graphs
     def matching_number(self):
         r"""
@@ -1598,7 +1611,8 @@ class INPGraph(Graph):
         cvxopt.solvers.options['abstol'] = float(1e-10)
         cvxopt.solvers.options['reltol'] = float(1e-10)
 
-        gc = self.complement()
+        # The below code assumes vertices are numbered 0, ..., n-1.
+        gc = self.complement().relabel(inplace=False)
         n = gc.order()
         m = gc.size()
 
