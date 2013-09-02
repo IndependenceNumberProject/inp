@@ -38,6 +38,7 @@ from sage.rings.rational import Rational
 from sage.functions.other import floor, ceil, sqrt
 from sage.numerical.mip import MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
+from sage.rings.finite_rings.integer_mod import Mod
 import sage.version
 from sage.combinat.combinat import combinations_iterator
 
