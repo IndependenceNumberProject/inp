@@ -36,6 +36,7 @@ from sage.graphs.graph_generators import graphs
 from sage.rings.integer import Integer
 from sage.rings.rational import Rational
 from sage.functions.other import floor, ceil, sqrt
+from sage.functions.log import *
 from sage.numerical.mip import MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
 from sage.rings.finite_rings.integer_mod import Mod
