@@ -41,6 +41,9 @@ from sage.misc.package import is_package_installed
 from sage.rings.finite_rings.integer_mod import Mod
 import sage.version
 from sage.combinat.combinat import combinations_iterator
+from sage.combinat.matrices.latin import LatinSquare
+from sage.matrix.all import matrix
+from sage.matrix.matrix_integer_dense import Matrix_integer_dense
 
 # TODO: Include more functions from survey
 
@@ -643,16 +646,64 @@ class INPGraph(Graph):
         return cls.SuperClaw(1,2,3)
 
     @classmethod
-    def LatinSquareGraph(cls, n):
+    def LatinSquareGraph(cls, ls, default_pos=False):
+        r"""
+        Construct a graph from the given Latin square.
+
+        EXAMPLES:
+
+        ::
+            sage: from sage.combinat.matrices.latin import back_circulant
+            sage: g = INPGraph.LatinSquareGraph(back_circulant(2))
+            sage: g.is_isomorphic(graphs.CompleteGraph(4))
+            True
+
+        ::
+            sage: g = INPGraph.LatinSquareGraph(matrix(ZZ, [[0,1],[1,0]]))
+            sage: g.num_edges()
+            6
+
+        The Latin square can only contain symbols 0, ... n::
+            sage: g = INPGraph.LatinSquareGraph([[1,2,3],[2,3,1],[3,1,2]])
+            Traceback (most recent call last):
+              ...
+            ValueError: Not a Latin square.
+
+        ::
+            sage: g = INPGraph.LatinSquareGraph([[0,1,2],[1,2,0],[2,0,1]])
+            sage: g.num_edges()
+            27
+        """
+        if not isinstance(ls, LatinSquare):
+            ls = LatinSquare(matrix(ZZ, ls))
+
+        if not ls.is_latin_square():
+            raise ValueError, "Not a Latin square."
+
+        if ls.nrows() != ls.ncols():
+            raise ValueError, "Matrix is not square."
+
+        n = ls.nrows()
         g = INPGraph()
+        pos = {}
+
+        # Readjust the vertices on a bell curve to show off the row
+        # and column cliques.
+        f = lambda a, b, x: a * exp(-(b * (x - 0.5*(n-1)))**2)
+
         for i in range(n):
             for j in range(n):
-                g.add_vertex((i, j, Mod(i + j, n)))
-                for (row, col, item) in g.vertices():
+                g.add_vertex((i, j, ls[i,j]))
+
+                pos[(i, j, ls[i,j])] = [j+f(1.2,0.5,n-i-1), n-i-1+f(1.2,0.5,j)]
+                for (row, col, val) in g.vertices():
                     if row == i and col == j: next
-                    if row == i or col == j or item == Mod(i + j, n):
-                        g.add_edge((row, col, item), (i, j, Mod(i + j, n)))
-        g.set_pos(g.layout_circular())
+                    if row == i or col == j or val == ls[i,j]:
+                        g.add_edge((row, col, val), (i, j, ls[i,j]))
+
+        if not default_pos:
+            g.set_pos(pos)
+
         return g
 
     @memoize_graphs
