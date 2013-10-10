@@ -40,7 +40,7 @@ from sage.numerical.mip import MixedIntegerLinearProgram
 from sage.misc.package import is_package_installed
 from sage.rings.finite_rings.integer_mod import Mod
 import sage.version
-from sage.combinat.combinat import combinations_iterator
+#from sage.combinat.combinat import Combinations
 from sage.combinat.matrices.latin import LatinSquare
 from sage.matrix.all import matrix
 from sage.matrix.matrix_integer_dense import Matrix_integer_dense
@@ -903,7 +903,9 @@ class INPGraph(Graph):
         alpha = self.independence_number()
         sets = [[]]
         for k in range(1, alpha + 1):
-            for S in combinations_iterator(self.vertices(), k):
+            # combinations_iterator is deprecated.
+            #for S in combinations_iterator(self.vertices(), k):
+            for S in Combinations(self.vertices(), k):
                 if self.is_independent_set(S):
                     sets.append(S)
         return sets
@@ -1264,7 +1266,11 @@ class INPGraph(Graph):
 
         # This any/imap version should be faster.
         subgraph_is_KE = lambda s: self.subgraph(s).is_KE()
-        return any(imap(subgraph_is_KE, combinations_iterator(self.vertices(), self.order() - 1)))
+        
+        # combinations_iterator is deprecated.
+        # return any(imap(subgraph_is_KE, combinations_iterator(self.vertices(), self.order() - 1)))
+
+        return any(imap(subgraph_is_KE, Combinations(self.vertices(), self.order() - 1)))
     is_almost_KE._is_alpha_property = True
 
     def has_nonempty_KE_part(self):
