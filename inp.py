@@ -686,9 +686,6 @@ class INPGraph(Graph):
         in Sage 5.2 that returns double this number. Calling this on an
         edge-weighted graph will NOT give the usual matching number.
         """
-        if float(sage.version.version) < 5.3:
-            warnings.warn("A bug in Sage versions < 5.3 may return an incorrect matching number.")
-
         return int(self.matching(value_only=True, use_edge_labels=False))
 
     mu = matching_number
