@@ -850,6 +850,28 @@ class INPGraph(Graph):
         # TODO: Write documentation
         return min(self.degree())
 
+    def is_theta_stable(self, certificate=False):
+        for r in range(1, self.order()):
+            # print r
+            for s in Combinations(self.vertices(), r):
+                # print s, "----",list(set(self.vertices())-set(s))
+                h = self.subgraph(s)
+                hc = self.subgraph(set(self.vertices()) - set(s))
+                g_alpha = self.alpha()
+                h_alpha = h.alpha()
+                hc_alpha = hc.alpha()
+                if h_alpha == h.lovasz_theta() and g_alpha == h_alpha + hc_alpha:
+                    if certificate:
+                        return (True, h)
+                    else:
+                        return True
+
+        if certificate:
+            return (False, INPGraph(0))
+        else:
+            return False
+
+
     def is_stable_block(self, s):
         return self.is_independent_set(s) and \
             len(s) == self.closed_neighborhood_subgraph(s).independence_number()
